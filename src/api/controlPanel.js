@@ -1,6 +1,7 @@
-import { getToken } from "./auth";
+// src/api/controlPanel.js
 
-const API_BASE = "https://amalaundry.com.au/wp-json/wp/v2";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const API_BASE = `${API_BASE_URL}/wp/v2`;
 
 const apiRequest = async (
   endpoint,
@@ -8,14 +9,8 @@ const apiRequest = async (
   body = null,
   isFormData = false
 ) => {
-  const token = getToken();
-  if (!token) throw new Error("Authentication token not found.");
+  const headers = {};
 
-  const headers = {
-    Authorization: `Bearer ${token}`,
-  };
-
-  // Ensure wpData and its nonce property are available
   if (typeof wpData !== "undefined" && wpData.nonce) {
     headers["X-WP-Nonce"] = wpData.nonce;
   }
@@ -23,6 +18,7 @@ const apiRequest = async (
   const options = {
     method,
     headers,
+    credentials: "include",
   };
 
   if (body && !isFormData) {
@@ -49,13 +45,12 @@ const apiRequest = async (
 };
 
 export const getSettings = async () => {
-  // Fetch all data in parallel for faster loading
   const [services, pickupSlots, paymentMethodsData] = await Promise.all([
     apiRequest("service?per_page=100"),
     apiRequest("pickup_slot?per_page=100"),
     apiRequest("payment_method?per_page=100").catch((err) => {
       console.error("Could not fetch payment methods:", err);
-      return []; // Return an empty array to prevent UI from breaking
+      return [];
     }),
   ]);
 
@@ -70,13 +65,11 @@ export const getSettings = async () => {
     time: slot.acf.time,
   }));
 
-  // Replaces mocked data with data from the backend
   const paymentMethods = paymentMethodsData.map((method) => ({
     id: method.id,
     name: method.title.rendered,
   }));
 
-  // Daily availability is still mocked as there is no endpoint for it
   return {
     prices,
     pickupSlots: slots,
@@ -111,21 +104,15 @@ export const updateServicePrice = (id, price) => {
 
 export const updateServiceImage = async (id, formData) => {
   try {
-    const token = getToken();
-
-    const headers = {
-      Authorization: `Bearer ${token}`,
-    };
-
+    const headers = {};
     if (typeof wpData !== "undefined" && wpData.nonce) {
       headers["X-WP-Nonce"] = wpData.nonce;
     }
 
-    // First upload the image to WordPress media library
-    // WordPress expects the file parameter to be named 'file' not 'image'
     const mediaResponse = await fetch(`${API_BASE}/media`, {
       method: "POST",
       headers: headers,
+      credentials: "include",
       body: formData,
     });
 
@@ -140,25 +127,22 @@ export const updateServiceImage = async (id, formData) => {
     const mediaData = await mediaResponse.json();
     const imageId = mediaData.id;
 
-    // Then update the service with the new image ID using ACF field
-    // Try both approaches: image ID and image URL
     try {
-      const updatedService = await apiRequest(`service/${id}`, "POST", {
+      await apiRequest(`service/${id}`, "POST", {
         acf: {
-          image: imageId, // Try with image ID first
+          image: imageId,
         },
       });
 
       return {
         id: id,
-        image: mediaData.source_url, // Return the image URL for display
+        image: mediaData.source_url,
       };
     } catch (acfError) {
       console.log("Trying with image URL instead of ID");
-      // If image ID doesn't work, try with image URL
-      const updatedService = await apiRequest(`service/${id}`, "POST", {
+      await apiRequest(`service/${id}`, "POST", {
         acf: {
-          image: mediaData.source_url, // Try with image URL
+          image: mediaData.source_url,
         },
       });
 
@@ -177,20 +161,17 @@ export const updateServiceImage = async (id, formData) => {
 
 export const deleteServiceImage = async (id) => {
   try {
-    // Update the service to remove the image reference
-    // Try different approaches for clearing the image field
     try {
-      const updatedService = await apiRequest(`service/${id}`, "POST", {
+      await apiRequest(`service/${id}`, "POST", {
         acf: {
-          image: null, // Set image field to null
+          image: null,
         },
       });
     } catch (nullError) {
       console.log("Trying with empty string instead of null");
-      // If null doesn't work, try with empty string
-      const updatedService = await apiRequest(`service/${id}`, "POST", {
+      await apiRequest(`service/${id}`, "POST", {
         acf: {
-          image: "", // Set image field to empty string
+          image: "",
         },
       });
     }
@@ -224,7 +205,6 @@ export const createPaymentMethod = (name) => {
     title: name,
     status: "publish",
     acf: {
-      // Creates a slug-like provider_code from the name for the backend
       provider_code: name.toLowerCase().replace(/[^a-z0-9]+/g, "_"),
       is_active: true,
     },
@@ -236,7 +216,6 @@ export const deletePaymentMethod = (id) => {
 };
 
 export const updateSettings = (settings) => {
-  // Placeholder for general settings updates
   console.log("Updating general settings:", settings);
   return Promise.resolve({ success: true });
 };

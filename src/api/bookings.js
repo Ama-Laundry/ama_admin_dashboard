@@ -1,21 +1,14 @@
-const API_BASE = "https://amalaundry.com.au/wp-json/wp/v2";
-const CUSTOM_API_BASE = "https://amalaundry.com.au/wp-json/ama/v1";
+// src/api/bookings.js
 
-function getToken() {
-  const token = localStorage.getItem("jwt");
-  if (!token) {
-    console.warn("JWT token missing");
-  }
-  return token;
-}
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const API_BASE = `${API_BASE_URL}/wp/v2`;
+const CUSTOM_API_BASE = `${API_BASE_URL}/ama/v1`;
 
 // Helper function to fetch all items of a certain type
 async function fetchAll(type) {
-  const token = getToken();
-  if (!token) return [];
   try {
     const res = await fetch(`${API_BASE}/${type}?per_page=100`, {
-      headers: { Authorization: `Bearer ${token}` },
+      credentials: "include",
     });
     if (!res.ok) return [];
     return await res.json();
@@ -38,7 +31,6 @@ export async function fetchLaundryOrders() {
     return [];
   }
 
-  // Create maps for quick lookups
   const servicesMap = new Map(services.map((s) => [s.id, s]));
   const pickupSlotsMap = new Map(pickupSlots.map((s) => [s.id, s]));
   const campsMap = new Map(
@@ -63,7 +55,6 @@ export async function fetchLaundryOrders() {
 
     const slot = pickupSlotsMap.get(acf.slot_id);
 
-    // FIX: Handle camp_name being a single ID or an array of IDs
     const campId = Array.isArray(acf.camp_name)
       ? acf.camp_name[0]
       : acf.camp_name;
@@ -88,37 +79,23 @@ export async function fetchLaundryOrders() {
 }
 
 export async function updateOrderStatus(orderId, status) {
-  const token = getToken();
-  if (!token) {
-    throw new Error("Authentication token missing");
-  }
-
   try {
-    const headers = {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    };
-
+    const headers = { "Content-Type": "application/json" };
     if (typeof wpData !== "undefined" && wpData.nonce) {
       headers["X-WP-Nonce"] = wpData.nonce;
     }
-
     const response = await fetch(`${CUSTOM_API_BASE}/orders/${orderId}`, {
       method: "PUT",
       headers: headers,
+      credentials: "include",
       body: JSON.stringify({
-        acf: {
-          order_status: status,
-        },
+        acf: { order_status: status },
       }),
     });
-
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      console.error("Update failed:", response.status, errorData);
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-
     return await response.json();
   } catch (error) {
     console.error("Error updating order status:", error);

@@ -1,22 +1,19 @@
-import { getToken } from './auth';
+// src/api/camps.js
 
-const API_BASE = "https://amalaundry.com.au/wp-json/wp/v2";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const API_BASE = `${API_BASE_URL}/wp/v2`;
 
 /**
  * Fetches all camps from the WordPress backend.
  */
 export async function fetchCamps() {
-  const token = getToken();
-  if (!token) throw new Error("Authentication token not found.");
-
   const response = await fetch(`${API_BASE}/camp?per_page=100`, {
-    headers: { 'Authorization': `Bearer ${token}` }
+    credentials: "include",
   });
 
   if (!response.ok) throw new Error("Failed to fetch camps.");
   const data = await response.json();
-  // Map to a simpler { id, name } format
-  return data.map(camp => ({ id: camp.id, name: camp.title.rendered }));
+  return data.map((camp) => ({ id: camp.id, name: camp.title.rendered }));
 }
 
 /**
@@ -24,18 +21,15 @@ export async function fetchCamps() {
  * @param {string} name - The name of the new camp.
  */
 export async function createCamp(name) {
-  const token = getToken();
-  if (!token) throw new Error("Authentication token not found.");
-
   const response = await fetch(`${API_BASE}/camp`, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
+    credentials: "include",
     body: JSON.stringify({
       title: name,
-      status: 'publish', // WordPress requires a status
+      status: "publish",
     }),
   });
 
@@ -49,15 +43,12 @@ export async function createCamp(name) {
  * @param {string} name - The new name for the camp.
  */
 export async function updateCamp(id, name) {
-  const token = getToken();
-  if (!token) throw new Error("Authentication token not found.");
-
   const response = await fetch(`${API_BASE}/camp/${id}`, {
-    method: 'POST', // WordPress uses POST for updates
+    method: "POST",
     headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
+    credentials: "include",
     body: JSON.stringify({ title: name }),
   });
 
@@ -70,13 +61,10 @@ export async function updateCamp(id, name) {
  * @param {number} id - The ID of the camp to delete.
  */
 export async function deleteCamp(id) {
-  const token = getToken();
-  if (!token) throw new Error("Authentication token not found.");
-
   const response = await fetch(`${API_BASE}/camp/${id}`, {
-    method: 'DELETE',
-    headers: { 'Authorization': `Bearer ${token}` },
-    body: JSON.stringify({ force: true }) // Use true to bypass trash
+    method: "DELETE",
+    credentials: "include",
+    body: JSON.stringify({ force: true }),
   });
 
   if (!response.ok) throw new Error("Failed to delete camp.");
