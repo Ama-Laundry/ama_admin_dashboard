@@ -1,5 +1,4 @@
 const API_BASE = "https://amalaundry.com.au/wp-json/wp/v2";
-const CUSTOM_API_BASE = "https://amalaundry.com.au/wp-json/ama/v1";
 
 function getToken() {
   const token = localStorage.getItem("jwt");
@@ -94,22 +93,15 @@ export async function updateOrderStatus(orderId, status) {
   }
 
   try {
-    const headers = {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    };
-
-    if (typeof wpData !== "undefined" && wpData.nonce) {
-      headers["X-WP-Nonce"] = wpData.nonce;
-    }
-
-    const response = await fetch(`${CUSTOM_API_BASE}/orders/${orderId}`, {
-      method: "PUT",
-      headers: headers,
+    const response = await fetch(`${API_BASE}/update_order_status`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
       body: JSON.stringify({
-        acf: {
-          order_status: status,
-        },
+        order_id: orderId,
+        order_status: status,
       }),
     });
 
