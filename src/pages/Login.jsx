@@ -14,8 +14,12 @@ export default function Login({ onLogin }) {
     setLoading(true);
 
     try {
-      const user = await loginAdmin(username, password);
-      onLogin(user);
+      const response = await loginAdmin(username, password);
+      // Save the nonce to localStorage
+      if (response && response.nonce) {
+        localStorage.setItem("wpNonce", response.nonce);
+      }
+      onLogin(response);
     } catch (err) {
       setError(err.message || "Login failed. Try again.");
     } finally {
