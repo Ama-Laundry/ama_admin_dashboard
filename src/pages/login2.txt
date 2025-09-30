@@ -1,0 +1,74 @@
+import { useState } from "react";
+import amaLogo from "../assets/ama_logo.png";
+import { loginAdmin } from "../api/auth";
+
+export default function Login({ onLogin }) {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    try {
+      const user = await loginAdmin(username, password);
+      onLogin(user);
+    } catch (err) {
+      setError(err.message || "Login failed. Try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="login-container">
+      <div className="header-logo-container">
+        <img src={amaLogo} alt="AMA Logo" className="header-logo" />
+      </div>
+
+      <div className="text-center">
+        <h1 className="header-title">Admin Dashboard</h1>
+        <p className="header-subtitle">Manage laundry booking services.</p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="card login-form">
+        <h2 className="card-title">Admin Login</h2>
+
+        <div className="space-y-4">
+          <input
+            type="text"
+            placeholder="Username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            className="form-input"
+            disabled={loading}
+          />
+
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="form-input"
+            disabled={loading}
+          />
+        </div>
+
+        {error && (
+          <p className="text-red-400 text-sm mt-4 text-center">{error}</p>
+        )}
+
+        <button
+          type="submit"
+          className="btn-add w-full mt-6"
+          disabled={loading}
+        >
+          {loading ? "Logging in..." : "Login"}
+        </button>
+      </form>
+    </div>
+  );
+}
