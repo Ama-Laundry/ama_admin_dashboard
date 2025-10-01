@@ -1,0 +1,158 @@
+@import "tailwindcss";
+
+/* === Global Layout === */
+body {
+  @apply m-0 text-white min-h-screen px-4 py-8 grid place-items-center;
+  background: radial-gradient(1200px 600px at 10% -10%, rgba(30, 58, 138, 0.25), transparent 55%),
+              radial-gradient(1000px 600px at 110% 10%, rgba(220, 38, 38, 0.18), transparent 45%),
+              linear-gradient(180deg, #0b1220 0%, #0a0f1a 100%);
+  font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial;
+}
+
+/* === Wrapper === */
+.wrap {
+  @apply w-full max-w-5xl mx-auto;
+}
+
+/* === Header === */
+header {
+  @apply text-center mb-6;
+}
+
+.logo {
+  @apply w-28 h-28 mx-auto rounded-3xl grid place-items-center font-extrabold text-white tracking-wide;
+  background: conic-gradient(
+    from 0deg,
+    #1e3a8a 0 90deg,
+    #dc2626 90deg 180deg,
+    #f59e0b 180deg 270deg,
+    #16a34a 270deg 360deg
+  );
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+.logo span {
+  filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.2));
+}
+
+h1 {
+  @apply text-2xl font-bold mt-3;
+}
+
+.sub {
+  @apply text-sm text-slate-400;
+}
+
+.brand-stripe {
+  @apply h-1.5 w-60 mx-auto mt-4 rounded-full;
+  background: linear-gradient(90deg, #1e3a8a, #dc2626, #f59e0b, #16a34a);
+}
+
+/* === Navigation === */
+.nav-bar {
+  @apply bg-[#121a2b] border border-white/10 rounded-xl p-4 mb-6 flex flex-wrap gap-2 justify-between items-center;
+}
+
+.nav-bar ul {
+  @apply flex flex-wrap gap-2;
+}
+
+.nav-link {
+  @apply px-4 py-2 rounded-lg text-white/70 font-medium transition-colors;
+}
+
+.nav-link:hover {
+  @apply bg-white/10 text-white;
+}
+
+.nav-link.active {
+  @apply bg-blue-800 text-white;
+}
+
+.nav-search {
+  @apply max-w-xs w-full;
+}
+
+.nav-search input {
+  @apply w-full bg-slate-800 text-white border border-slate-600 rounded-lg px-4 py-2;
+}
+
+/* === Card === */
+.card {
+  @apply bg-white/5 border border-white/10 backdrop-blur-md shadow-xl rounded-2xl p-6 transition-all duration-300;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+.card h2 {
+  @apply text-xl font-semibold mb-4 border-b border-white/20 pb-2;
+}
+
+/* === Grid Layouts === */
+.grid.two {
+  @apply grid grid-cols-1 md:grid-cols-2 gap-4;
+}
+
+/* === Toggle Switch === */
+.toggle-container {
+  @apply flex items-center justify-between;
+}
+
+.toggle-switch {
+  @apply relative inline-block w-[60px] h-[34px];
+}
+
+.toggle-switch input {
+  @apply opacity-0 w-0 h-0;
+}
+
+.toggle-switch .slider {
+  @apply absolute top-0 left-0 right-0 bottom-0 bg-gray-300 rounded-full transition-colors duration-300 cursor-pointer;
+}
+
+.toggle-switch .slider::before {
+  content: "";
+  @apply absolute h-[26px] w-[26px] left-1 bottom-1 bg-white rounded-full transition-transform duration-300;
+}
+
+.toggle-switch input:checked + .slider {
+  @apply bg-green-500;
+}
+
+.toggle-switch input:checked + .slider::before {
+  @apply translate-x-[26px];
+}
+
+/* === List Table === */
+.list-table {
+  @apply grid gap-3;
+}
+
+.list-table > div {
+  @apply flex items-center gap-3 p-3 bg-slate-800 border border-slate-700 rounded-xl;
+}
+
+.label {
+  @apply flex-1 font-medium;
+}
+
+.value {
+  @apply font-bold min-w-[80px] text-right;
+}
+
+/* === Buttons === */
+button {
+  @apply px-4 py-2 rounded-lg font-semibold text-white transition-colors;
+}
+
+.btn-danger {
+  @apply bg-red-600 hover:bg-red-700;
+}
+
+.btn-add {
+  @apply bg-green-600 hover:bg-green-700;
+}
+
+/* === Utility === */
+.hidden {
+  @apply hidden;
+}
