@@ -74,9 +74,9 @@ const PaymentMethods = () => {
             Enable or disable the payment gateways from your Site Settings.
           </p>
 
-          {error && (
+          {/* {error && (
             <p className="text-red-500 bg-red-100 p-3 rounded my-4">{error}</p>
-          )}
+          )} */}
           {successMessage && (
             <p className="text-green-700 bg-green-100 p-3 rounded my-4">
               {successMessage}

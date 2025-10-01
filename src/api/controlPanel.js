@@ -69,10 +69,21 @@ const customApiRequest = async (endpoint, method = "POST", body = {}) => {
   const response = await fetch(`${CUSTOM_API_BASE}/${endpoint}`, options);
 
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(
-      errorData.message || `Request to ${endpoint} failed.`
-    );
+    let errorMessage = `Request to ${endpoint} failed with status ${response.status}`;
+
+    try {
+      const errorData = await response.json();
+      if (errorData.message) {
+        errorMessage = errorData.message;
+      } else if (errorData.error) {
+        errorMessage = errorData.error;
+      }
+    } catch (parseError) {
+      // If we can't parse JSON, use status text
+      errorMessage = response.statusText || `HTTP ${response.status}`;
+    }
+
+    throw new Error(errorMessage);
   }
   return response.json();
 };
@@ -253,20 +264,23 @@ export const getPaymentGateways = async () => {
   return response.json();
 };
 
-export const updatePaymentGateways = async (gateways) => {
-  const response = await fetch(`${CUSTOM_API_BASE}/payment-gateways`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-WP-Nonce": localStorage.getItem("wpNonce"),
-    },
-    credentials: "include",
-    body: JSON.stringify(gateways),
-  });
+// export const updatePaymentGateways = async (gateways) => {
+//   const response = await fetch(`${CUSTOM_API_BASE}/payment-gateways`, {
+//     method: "POST",
+//     headers: {
+//       "Content-Type": "application/json",
+//       "X-WP-Nonce": localStorage.getItem("wpNonce"),
+//     },
+//     credentials: "include",
+//     body: JSON.stringify(gateways),
+//   });
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.message || "Failed to update payment gateways.");
-  }
-  return response.json();
+//   if (!response.ok) {
+//     const errorData = await response.json().catch(() => ({}));
+//     throw new Error(errorData.message || "Failed to update payment gateways.");
+//   }
+//   return response.json();
+// };
+export const updatePaymentGateways = async (gateways) => {
+  return customApiRequest("payment-gateways", "POST", gateways);
 };
