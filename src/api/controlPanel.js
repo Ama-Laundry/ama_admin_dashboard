@@ -3,6 +3,9 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const API_BASE = `${API_BASE_URL}/wp/v2`;
 
+// NEW: Define a base URL for our custom endpoints
+const CUSTOM_API_BASE = `${API_BASE_URL}/ama/v1`;
+
 const apiRequest = async (
   endpoint,
   method = "GET",
@@ -45,10 +48,44 @@ const apiRequest = async (
   return text ? JSON.parse(text) : { success: true };
 };
 
+// NEW: A dedicated request function for custom /ama/v1 endpoints
+const customApiRequest = async (endpoint, method = "POST", body = {}) => {
+  const headers = {
+    "Content-Type": "application/json",
+  };
+  const nonce = localStorage.getItem("wpNonce");
+
+  if (nonce) {
+    headers["X-WP-Nonce"] = nonce;
+  }
+
+  const options = {
+    method,
+    headers,
+    credentials: "include",
+    body: JSON.stringify(body),
+  };
+
+  const response = await fetch(`${CUSTOM_API_BASE}/${endpoint}`, options);
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(
+      errorData.message || `Request to ${endpoint} failed.`
+    );
+  }
+  return response.json();
+};
+
+
+
 export const getSettings = async () => {
-  const [services, pickupSlots] = await Promise.all([
+  // MODIFIED: Fetch site settings in parallel
+  const [services, pickupSlots, siteSettings] = await Promise.all([
     apiRequest("service?per_page=100"),
     apiRequest("pickup_slot?per_page=100"),
+    // Fetch from our new GET endpoint
+    fetch(`${CUSTOM_API_BASE}/site-settings`).then((res) => res.json()),
   ]);
 
   const prices = services.map((service) => ({
@@ -65,9 +102,7 @@ export const getSettings = async () => {
   return {
     prices,
     pickupSlots: slots,
-    dailyAvailability: {
-      isAvailable: true,
-    },
+    dailyAvailability: siteSettings.dailyAvailability,
   };
 };
 
@@ -192,15 +227,16 @@ export const deletePickupSlot = (id) => {
   return apiRequest(`pickup_slot/${id}`, "DELETE", { force: true });
 };
 
+// MODIFIED: Implement the updateSettings function
 export const updateSettings = (settings) => {
   console.log("Updating general settings:", settings);
-  return Promise.resolve({ success: true });
+  // Call our new POST endpoint
+  return customApiRequest("site-settings", "POST", settings);
 };
 
 // --- PAYMENT GATEWAY FUNCTIONS ---
 
 export const getPaymentGateways = async () => {
-  const CUSTOM_API_BASE = `${API_BASE_URL}/ama/v1`;
   const response = await fetch(`${CUSTOM_API_BASE}/payment-gateways`, {
     method: "GET",
     headers: {
@@ -218,7 +254,6 @@ export const getPaymentGateways = async () => {
 };
 
 export const updatePaymentGateways = async (gateways) => {
-  const CUSTOM_API_BASE = `${API_BASE_URL}/ama/v1`;
   const response = await fetch(`${CUSTOM_API_BASE}/payment-gateways`, {
     method: "POST",
     headers: {
