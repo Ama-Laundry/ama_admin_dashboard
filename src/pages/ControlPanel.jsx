@@ -6,14 +6,12 @@ import {
 } from "@heroicons/react/24/outline";
 import Card from "../components/Card";
 import TimePicker from "../components/TimePicker";
-import PaymentMethods from "../components/PaymentMethods"; // 1. IMPORT THE NEW COMPONENT
+import PaymentMethods from "../components/PaymentMethods";
 import {
   getSettings,
   updateSettings,
   createPickupSlot,
   deletePickupSlot,
-  // createPaymentMethod, // 2. REMOVED OLD IMPORTS
-  // deletePaymentMethod,
   updateServicePrice,
   getServices,
   updateServiceImage,
@@ -41,12 +39,10 @@ export default function ControlPanel() {
   const [loading, setLoading] = useState(true);
   const [prices, setPrices] = useState([]);
   const [pickupSlots, setPickupSlots] = useState([]);
-  // const [paymentMethods, setPaymentMethods] = useState([]); // 3. REMOVED OLD STATE
   const [services, setServices] = useState([]);
   const [dailyAvailability, setDailyAvailability] = useState(true);
   const [newSlotStart, setNewSlotStart] = useState("");
   const [newSlotEnd, setNewSlotEnd] = useState("");
-  // const [newPaymentMethod, setNewPaymentMethod] = useState(""); // 3. REMOVED OLD STATE
   const [error, setError] = useState("");
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadingServiceId, setUploadingServiceId] = useState(null);
@@ -74,8 +70,7 @@ export default function ControlPanel() {
 
         setPrices(settings.prices);
         setPickupSlots(settings.pickupSlots);
-        // setPaymentMethods(settings.paymentMethods); // 3. REMOVED OLD STATE UPDATE
-        setDailyAvailability(settings.dailyAvailability);
+        setDailyAvailability(settings.daily_availability);
 
         // Initialize image version for each service
         const initialImageVersion = {};
@@ -158,15 +153,11 @@ export default function ControlPanel() {
     }
   };
 
-  // 4. REMOVED OLD PAYMENT METHOD HANDLERS
-  // const handleAddPaymentMethod = async () => { ... };
-  // const handleDeletePaymentMethod = async (id) => { ... };
-
   const handleToggleAvailability = () => {
     const newAvailability = !dailyAvailability;
     setDailyAvailability(newAvailability);
     updateSettings({
-      dailyAvailability: newAvailability,
+      daily_availability: newAvailability,
     });
   };
 
@@ -452,7 +443,6 @@ export default function ControlPanel() {
             </form>
           </Card>
 
-          {/* 5. RENDER THE DYNAMIC PAYMENT METHODS COMPONENT */}
           <PaymentMethods />
         </div>
       </div>
