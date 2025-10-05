@@ -75,7 +75,7 @@ export default function ControlPanel() {
         setPrices(settings.prices);
         setPickupSlots(settings.pickupSlots);
         // setPaymentMethods(settings.paymentMethods); // 3. REMOVED OLD STATE UPDATE
-        setDailyAvailability(settings.dailyAvailability.isAvailable);
+        setDailyAvailability(settings.dailyAvailability);
 
         // Initialize image version for each service
         const initialImageVersion = {};
@@ -166,7 +166,7 @@ export default function ControlPanel() {
     const newAvailability = !dailyAvailability;
     setDailyAvailability(newAvailability);
     updateSettings({
-      dailyAvailability: { isAvailable: newAvailability },
+      dailyAvailability: newAvailability,
     });
   };
 
