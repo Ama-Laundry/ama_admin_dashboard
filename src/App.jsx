@@ -1,6 +1,7 @@
 // src/App.jsx
 
-import { useState, useEffect } from "react";import Pusher from "pusher-js"; // Import Pusher
+import { useState, useEffect } from "react";
+import Pusher from "pusher-js"; // Import Pusher
 import Header from "./components/Header";
 import NavBar from "./components/NavBar";
 import Dashboard from "./pages/Dashboard";
@@ -10,6 +11,7 @@ import Statistics from "./pages/Statistics";
 import ControlPanel from "./pages/ControlPanel";
 import Account from "./pages/Account";
 import Login from "./pages/Login";
+import ToastNotification from "./components/Notification"; // <-- Updated import
 import { logoutAdmin } from "./api/auth";
 
 export default function App() {
@@ -95,7 +97,7 @@ export default function App() {
     <div className="wrap">
       {/* Render the notification if it exists */}
       {notification && (
-        <Notification
+        <ToastNotification
           message={notification}
           onClose={() => setNotification(null)}
         />

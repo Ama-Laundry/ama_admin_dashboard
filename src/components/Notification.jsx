@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 
-export default function Notification({ message, onClose }) {
+export default function ToastNotification({ message, onClose }) {
   useEffect(() => {
     // Automatically close the notification after 5 seconds
     const timer = setTimeout(() => {
