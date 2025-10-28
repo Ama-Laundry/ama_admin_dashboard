@@ -57,9 +57,10 @@ export default function App() {
       channel.bind("new-order", (data) => {
         console.log("Pusher: New Order Received", data);
         // Set the notification message
-        setNotification(
-          `${data.message} (Customer: ${data.customer || "N/A"})`
-        );
+        // setNotification(
+        //   `${data.message} (Customer: ${data.customer || "N/A"})`
+        // );
+        setNotification(data.message);
       });
 
       // Cleanup on component unmount or user logout
