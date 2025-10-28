@@ -27,11 +27,9 @@ const apiRequest = async (
     headers["X-WP-Nonce"] = nonce;
   }
 
-  // Also include the JWT token from cookies
-  const jwtToken = getCookie("jwt_token");
-  if (jwtToken) {
-    headers["Authorization"] = `Bearer ${jwtToken}`;
-  }
+  // --- CHANGED: REMOVED JWT TOKEN LOGIC ---
+  // The logic for 'jwt_token' was removed from here
+  // as it conflicts with cookie/nonce authentication.
 
   const options = {
     method,
@@ -49,7 +47,7 @@ const apiRequest = async (
   console.log(`Making ${method} request to ${endpoint}`, {
     headers: {
       ...headers,
-      Authorization: headers.Authorization ? "Bearer [HIDDEN]" : undefined,
+      // --- CHANGED: REMOVED AUTHORIZATION HEADER FROM LOG ---
     },
   });
 
@@ -67,7 +65,8 @@ const apiRequest = async (
           errorMessage = "Authentication failed. Please log in again.";
           // Clear auth data on 401
           localStorage.removeItem("wpNonce");
-          localStorage.removeItem("userLoggedIn");
+          // --- CHANGED: Corrected item to remove ---
+          localStorage.removeItem("ama_user"); // Was 'userLoggedIn'
         }
       } catch (parseError) {
         console.warn("Could not parse error response:", parseError);
@@ -87,40 +86,12 @@ const apiRequest = async (
 // Helper function to fetch all items of a certain type
 async function fetchAll(type) {
   try {
-    const headers = {};
-
-    // Get nonce from localStorage
-    const nonce = localStorage.getItem("wpNonce");
-    if (nonce) {
-      headers["X-WP-Nonce"] = nonce;
-    }
-
-    // Also include the JWT token from cookies
-    const jwtToken = getCookie("jwt_token");
-    if (jwtToken) {
-      headers["Authorization"] = `Bearer ${jwtToken}`;
-    }
-
-    const res = await fetch(`${API_BASE}/${type}?per_page=100`, {
-      headers,
-      credentials: "include",
-    });
-
-    if (!res.ok) {
-      if (res.status === 401) {
-        console.error(
-          `Authentication failed for ${type}. Please log in again.`
-        );
-        localStorage.removeItem("wpNonce");
-        localStorage.removeItem("userLoggedIn");
-      }
-      console.error(`Failed to fetch ${type}: HTTP ${res.status}`);
-      return [];
-    }
-    return await res.json();
+    // Use the robust apiRequest function for the GET request
+    const data = await apiRequest(`${type}?per_page=100`);
+    return data;
   } catch (err) {
-    console.error(`Failed to fetch ${type}:`, err);
-    return [];
+    console.error(`Failed to fetch ${type}:`, err.message);
+    return []; // Return an empty array on failure
   }
 }
 
@@ -202,11 +173,8 @@ export async function updateOrderStatus(orderId, status) {
       headers["X-WP-Nonce"] = nonce;
     }
 
-    // Also include the JWT token from cookies
-    const jwtToken = getCookie("jwt_token");
-    if (jwtToken) {
-      headers["Authorization"] = `Bearer ${jwtToken}`;
-    }
+    // --- CHANGED: REMOVED JWT TOKEN LOGIC ---
+    // The logic for 'jwt_token' was removed from here
 
     // Fallback to wpData if available (for admin pages)
     if (typeof wpData !== "undefined" && wpData.nonce && !nonce) {
@@ -218,7 +186,7 @@ export async function updateOrderStatus(orderId, status) {
     console.log(`Updating order ${orderId} status to ${status}`, {
       headers: {
         ...headers,
-        Authorization: headers.Authorization ? "Bearer [HIDDEN]" : undefined,
+        // --- CHANGED: REMOVED AUTHORIZATION HEADER FROM LOG ---
       },
     });
 
@@ -234,7 +202,8 @@ export async function updateOrderStatus(orderId, status) {
     if (!response.ok) {
       if (response.status === 401) {
         localStorage.removeItem("wpNonce");
-        localStorage.removeItem("userLoggedIn");
+        // --- CHANGED: Corrected item to remove ---
+        localStorage.removeItem("ama_user"); // Was 'userLoggedIn'
         throw new Error("Authentication failed. Please log in again.");
       }
 
@@ -261,7 +230,7 @@ export const verifyAuth = async () => {
   }
 };
 
-export const logoutUser = async () => {
+export async function logoutUser() {
   try {
     const headers = { "Content-Type": "application/json" };
     const nonce = localStorage.getItem("wpNonce");
@@ -279,6 +248,7 @@ export const logoutUser = async () => {
   } finally {
     // Always clear local storage
     localStorage.removeItem("wpNonce");
-    localStorage.removeItem("userLoggedIn");
+    // --- CHANGED: Corrected item to remove ---
+    localStorage.removeItem("ama_user"); // Was 'userLoggedIn'
   }
-};
+}

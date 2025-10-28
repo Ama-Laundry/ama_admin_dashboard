@@ -418,3 +418,43 @@ input::placeholder {
 .card::-webkit-scrollbar-track {
   @apply bg-transparent;
 }
+
+
+/* === NEW: Notification Toast Styles === */
+.notification-toast {
+  @apply fixed top-5 right-5 w-auto max-w-sm p-4 rounded-xl border border-white shadow-2xl z-50;
+  background-color: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.notification-content {
+  @apply text-black;
+}
+
+.notification-content strong {
+  @apply text-lg font-bold text-purple-700;
+}
+
+.notification-content p {
+  @apply text-sm mt-1;
+}
+
+.notification-close {
+  @apply absolute top-1 right-2 text-2xl text-black font-bold cursor-pointer bg-transparent border-none;
+}
+
+.notification-close:hover {
+  @apply text-red-600;
+}
