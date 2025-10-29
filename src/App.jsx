@@ -24,22 +24,20 @@ const beamsTokenProvider = (userId) => {
   }/ama/v1/beams-auth`;
   const nonce = localStorage.getItem("wpNonce"); // Get the WP nonce
 
-  // Return a TokenProvider instance required by the Beams SDK
+  // For GET requests with query parameters
+  const urlWithParams = `${beamsAuthEndpoint}?user_id=${encodeURIComponent(
+    userId
+  )}`;
+
   return new PusherPushNotifications.TokenProvider({
-    url: beamsAuthEndpoint,
-    method: "POST", // <-- This was already correct
+    url: urlWithParams, // Use URL with query params
+    method: "GET", // Change to GET to match what Pusher Beams is actually sending
     headers: {
       "Content-Type": "application/json",
       // Include the nonce in the headers for WordPress authentication
       "X-WP-Nonce": nonce || "",
     },
-    // ++++++++++ START: CORRECTED SECTION ++++++++++
-    // Send an empty body to force the request method to POST
-    body: JSON.stringify({
-      user_id: userId, // This is what the Beams SDK expects
-    }),
-    // ++++++++++ END: CORRECTED SECTION ++++++++++
-    // Crucially, include credentials (cookies) for WordPress authentication
+    // No body for GET requests
     withCredentials: true,
   });
 };
@@ -168,7 +166,10 @@ export default function App() {
       if (pusherChannelsClient) {
         console.log("Disconnecting Pusher Channels client.");
         pusherChannelsClient.unsubscribe("orders-channel");
-        pusherChannelsClient.disconnect();
+        // Add small delay to prevent WebSocket closing errors
+        setTimeout(() => {
+          pusherChannelsClient.disconnect();
+        }, 100);
       }
 
       // Cleanup Pusher Beams client
