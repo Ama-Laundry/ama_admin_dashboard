@@ -35,7 +35,9 @@ const beamsTokenProvider = (userId) => {
     },
     // ++++++++++ START: CORRECTED SECTION ++++++++++
     // Send an empty body to force the request method to POST
-    body: JSON.stringify({}),
+    body: JSON.stringify({
+      user_id: userId, // This is what the Beams SDK expects
+    }),
     // ++++++++++ END: CORRECTED SECTION ++++++++++
     // Crucially, include credentials (cookies) for WordPress authentication
     withCredentials: true,
