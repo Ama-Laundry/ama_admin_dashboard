@@ -19,17 +19,24 @@ import { logoutAdmin } from "./api/auth";
 // Beams Token Provider function to fetch auth token from backend
 const beamsTokenProvider = (userId) => {
   // Construct the URL for your backend authentication endpoint
-  const beamsAuthEndpoint = `${import.meta.env.VITE_API_BASE_URL}/ama/v1/beams-auth`;
+  const beamsAuthEndpoint = `${
+    import.meta.env.VITE_API_BASE_URL
+  }/ama/v1/beams-auth`;
   const nonce = localStorage.getItem("wpNonce"); // Get the WP nonce
 
   // Return a TokenProvider instance required by the Beams SDK
   return new PusherPushNotifications.TokenProvider({
     url: beamsAuthEndpoint,
+    method: "POST", // <-- This was already correct
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       // Include the nonce in the headers for WordPress authentication
-      'X-WP-Nonce': nonce || '',
+      "X-WP-Nonce": nonce || "",
     },
+    // ++++++++++ START: CORRECTED SECTION ++++++++++
+    // Send an empty body to force the request method to POST
+    body: JSON.stringify({}),
+    // ++++++++++ END: CORRECTED SECTION ++++++++++
     // Crucially, include credentials (cookies) for WordPress authentication
     withCredentials: true,
   });
