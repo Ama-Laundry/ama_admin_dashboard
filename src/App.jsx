@@ -18,26 +18,23 @@ import { logoutAdmin } from "./api/auth";
 
 // Beams Token Provider function to fetch auth token from backend
 const beamsTokenProvider = (userId) => {
-  // Construct the URL for your backend authentication endpoint
+  // Use the base URL without query parameters
   const beamsAuthEndpoint = `${
     import.meta.env.VITE_API_BASE_URL
   }/ama/v1/beams-auth`;
-  const nonce = localStorage.getItem("wpNonce"); // Get the WP nonce
-
-  // For GET requests with query parameters
-  const urlWithParams = `${beamsAuthEndpoint}?user_id=${encodeURIComponent(
-    userId
-  )}`;
+  const nonce = localStorage.getItem("wpNonce");
 
   return new PusherPushNotifications.TokenProvider({
-    url: urlWithParams, // Use URL with query params
-    method: "GET", // Change to GET to match what Pusher Beams is actually sending
+    url: beamsAuthEndpoint, // Just the endpoint, no query params
+    method: "GET", // Keep as GET
     headers: {
       "Content-Type": "application/json",
-      // Include the nonce in the headers for WordPress authentication
       "X-WP-Nonce": nonce || "",
     },
-    // No body for GET requests
+    // Let Pusher Beams SDK handle the query parameters
+    queryParams: {
+      user_id: userId, // This will be properly appended by the SDK
+    },
     withCredentials: true,
   });
 };
