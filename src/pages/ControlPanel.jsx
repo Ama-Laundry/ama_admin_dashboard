@@ -70,7 +70,9 @@ export default function ControlPanel() {
 
         setPrices(settings.prices);
         setPickupSlots(settings.pickupSlots);
-        setDailyAvailability(settings.daily_availability);
+        // ++++++++++ START: CORRECTED LINE ++++++++++
+        setDailyAvailability(settings.dailyAvailability);
+        // ++++++++++ END: CORRECTED LINE ++++++++++
 
         // Initialize image version for each service
         const initialImageVersion = {};
