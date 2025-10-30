@@ -19,13 +19,13 @@ const beamsTokenProvider = (userId) => {
   const beamsAuthEndpoint = `${import.meta.env.VITE_API_BASE_URL}/ama/v1/beams-auth`;
   const nonce = localStorage.getItem("wpNonce");
 
-  // Properly construct URL with URL API to avoid duplicate parameters
-  const url = new URL(beamsAuthEndpoint);
-  url.searchParams.append('user_id', userId);
-
+  // ++++++++++ START: CORRECTED CODE ++++++++++
+  // Do not manually append user_id. The TokenProvider does this automatically.
+  // Passing the base endpoint URL resolves the 403 error.
   return new PusherPushNotifications.TokenProvider({
-    url: url.toString(),
+    url: beamsAuthEndpoint,
     method: "GET",
+    // ++++++++++ END: CORRECTED CODE ++++++++++
     headers: {
       "Content-Type": "application/json",
       "X-WP-Nonce": nonce || "",
@@ -43,9 +43,9 @@ const debugBeamsAuth = async (userId) => {
   url.searchParams.append('user_id', userId);
 
   try {
-    console.log('🔧 Debug Beams Auth - Making request to:', url.toString());
-    console.log('🔧 Debug Beams Auth - Nonce:', nonce ? 'Present' : 'Missing');
-    console.log('🔧 Debug Beams Auth - User ID:', userId);
+    console.log('肌 Debug Beams Auth - Making request to:', url.toString());
+    console.log('肌 Debug Beams Auth - Nonce:', nonce ? 'Present' : 'Missing');
+    console.log('肌 Debug Beams Auth - User ID:', userId);
 
     const response = await fetch(url.toString(), {
       method: 'GET',
@@ -56,19 +56,19 @@ const debugBeamsAuth = async (userId) => {
       credentials: 'include',
     });
 
-    console.log('🔧 Debug Beams Auth - Response status:', response.status);
+    console.log('肌 Debug Beams Auth - Response status:', response.status);
     
     if (!response.ok) {
       const errorText = await response.text();
-      console.log('🔧 Debug Beams Auth - Error response:', errorText);
+      console.log('肌 Debug Beams Auth - Error response:', errorText);
       throw new Error(`HTTP ${response.status}: ${errorText}`);
     }
 
     const data = await response.json();
-    console.log('🔧 Debug Beams Auth - Success:', data);
+    console.log('肌 Debug Beams Auth - Success:', data);
     return data;
   } catch (error) {
-    console.error('🔧 Debug Beams Auth - Failed:', error);
+    console.error('肌 Debug Beams Auth - Failed:', error);
     throw error;
   }
 };
