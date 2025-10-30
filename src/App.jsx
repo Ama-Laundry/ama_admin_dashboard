@@ -13,10 +13,9 @@ import Account from "./pages/Account";
 import Login from "./pages/Login";
 import ToastNotification from "./components/Notification";
 import { logoutAdmin } from "./api/auth";
-import Card from "./components/Card"; // Import Card for the loading state
 
-// FIXED Beams Token Provider - uses GET with properly constructed URL
-const beamsTokenProvider = (userId) => {
+// CORRECTED Beams Token Provider - uses GET with properly constructed URL
+const beamsTokenProvider = () => {
   const beamsAuthEndpoint = `${import.meta.env.VITE_API_BASE_URL}/ama/v1/beams-auth`;
   const nonce = localStorage.getItem("wpNonce");
 
@@ -31,20 +30,26 @@ const beamsTokenProvider = (userId) => {
   });
 };
 
-// Debug function (left here for testing, but not used in the main flow)
+// Debug function to test Beams authentication
 const debugBeamsAuth = async (userId) => {
   const beamsAuthEndpoint = `${import.meta.env.VITE_API_BASE_URL}/ama/v1/beams-auth`;
   const nonce = localStorage.getItem("wpNonce");
   
-  const url = new URL(beamsAuthEndpoint);
-  url.searchParams.append('user_id', userId);
+  // Test both with and without user_id parameter
+  const urlWithParam = new URL(beamsAuthEndpoint);
+  urlWithParam.searchParams.append('user_id', userId);
+  
+  const urlWithoutParam = new URL(beamsAuthEndpoint);
+
+  console.log('🔍 Debug Beams Auth - Testing endpoints:');
+  console.log('With user_id param:', urlWithParam.toString());
+  console.log('Without user_id param:', urlWithoutParam.toString());
+  console.log('Nonce:', nonce ? 'Present' : 'Missing');
 
   try {
-    console.log('肌 Debug Beams Auth - Making request to:', url.toString());
-    console.log('肌 Debug Beams Auth - Nonce:', nonce ? 'Present' : 'Missing');
-    console.log('肌 Debug Beams Auth - User ID:', userId);
-
-    const response = await fetch(url.toString(), {
+    // Test without user_id first (how Beams actually calls it)
+    console.log('Testing endpoint WITHOUT user_id parameter...');
+    const response = await fetch(urlWithoutParam.toString(), {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -53,19 +58,19 @@ const debugBeamsAuth = async (userId) => {
       credentials: 'include',
     });
 
-    console.log('肌 Debug Beams Auth - Response status:', response.status);
+    console.log('Response status:', response.status);
     
     if (!response.ok) {
       const errorText = await response.text();
-      console.log('肌 Debug Beams Auth - Error response:', errorText);
+      console.log('Error response:', errorText);
       throw new Error(`HTTP ${response.status}: ${errorText}`);
     }
 
     const data = await response.json();
-    console.log('肌 Debug Beams Auth - Success:', data);
+    console.log('Success:', data);
     return data;
   } catch (error) {
-    console.error('肌 Debug Beams Auth - Failed:', error);
+    console.error('Debug Beams Auth - Failed:', error);
     throw error;
   }
 };
@@ -76,12 +81,6 @@ export default function App() {
   const [notification, setNotification] = useState(null);
   const beamsClientRef = useRef(null);
   const pusherChannelsRef = useRef(null);
-  
-  // ++++++++++ START: NEW CODE ++++++++++
-  // State to prevent dashboard from loading before Beams auth is complete
-  const [isBeamsReady, setIsBeamsReady] = useState(false);
-  // ++++++++++ END: NEW CODE ++++++++++
-
 
   // On initial load, check if user data exists in localStorage
   useEffect(() => {
@@ -114,6 +113,7 @@ export default function App() {
           disabledTransports: ['sockjs', 'xhr_streaming', 'xhr_polling'] // Disable problematic transports
         });
         
+        // Add connection state monitoring
         pusherChannelsRef.current.connection.bind('state_change', (states) => {
           console.log('Pusher Channels state change:', states);
         });
@@ -146,6 +146,7 @@ export default function App() {
       const beamsInstanceId = import.meta.env.VITE_PUSHER_BEAMS_INSTANCE_ID;
 
       if (beamsInstanceId) {
+        // Only initialize if the client isn't already stored in the ref
         if (!beamsClientRef.current) {
           beamsClientRef.current = new PusherPushNotifications.Client({
             instanceId: beamsInstanceId,
@@ -164,10 +165,10 @@ export default function App() {
               console.log("Browser notification permission granted.");
               console.log(`Authenticating Beams for user: ${beamsUserId}`);
               
-              // This will now be the *first* request to use the nonce
+              // Use the corrected token provider without userId parameter
               return beamsClientRef.current.setUserId(
                 beamsUserId,
-                beamsTokenProvider(beamsUserId)
+                beamsTokenProvider() // No parameter needed
               );
             } else {
               console.warn("Browser notification permission denied by user.");
@@ -180,26 +181,22 @@ export default function App() {
           })
           .then(() => {
             console.log("Successfully subscribed to 'new-orders' interest.");
-            // ++++++++++ START: NEW CODE ++++++++++
-            setIsBeamsReady(true); // Unblock the UI
-            // ++++++++++ END: NEW CODE ++++++++++
           })
           .catch((error) => {
             if (error.message !== "Permission denied") {
               console.error("Pusher Beams initialization error:", error);
+              
+              // Additional debug info
               console.log('Current user:', user);
               console.log('Beams Instance ID:', beamsInstanceId);
               console.log('API Base URL:', import.meta.env.VITE_API_BASE_URL);
+              
+              // Debug: Test the auth endpoint directly
+              debugBeamsAuth(beamsUserId).catch(console.error);
             }
-            // ++++++++++ START: NEW CODE ++++++++++
-            setIsBeamsReady(true); // Unblock the UI even if Beams fails
-            // ++++++++++ END: NEW CODE ++++++++++
           });
       } else {
         console.warn("Pusher Beams Instance ID not configured");
-        // ++++++++++ START: NEW CODE ++++++++++
-        setIsBeamsReady(true); // Unblock UI if Beams is not configured
-        // ++++++++++ END: NEW CODE ++++++++++
       }
     }
 
@@ -207,6 +204,7 @@ export default function App() {
     return () => {
       console.log("Cleaning up Pusher services...");
       
+      // Cleanup Pusher Channels
       if (pusherChannelsRef.current) {
         try {
           pusherChannelsRef.current.unsubscribe("orders-channel");
@@ -219,6 +217,7 @@ export default function App() {
         }
       }
 
+      // Cleanup Pusher Beams
       if (beamsClientRef.current) {
         beamsClientRef.current.stop()
           .then(() => console.log("Beams client stopped successfully"))
@@ -226,15 +225,12 @@ export default function App() {
         beamsClientRef.current = null;
       }
     };
-  }, [user]); // This effect still only runs when `user` changes
+  }, [user]);
 
   const handleLogin = (userData) => {
     localStorage.setItem("ama_user", JSON.stringify(userData));
     setUser(userData);
     setActiveTab("dashboard");
-    // ++++++++++ START: NEW CODE ++++++++++
-    setIsBeamsReady(false); // Reset on login
-    // ++++++++++ END: NEW CODE ++++++++++
   };
 
   const handleLogout = async () => {
@@ -273,22 +269,7 @@ export default function App() {
         <>
           <Header />
           <NavBar activeTab={activeTab} setActiveTab={setActiveTab} />
-          
-          {/* ++++++++++ START: MODIFIED CODE ++++++++++ */}
-          {/* We now conditionally render the main content.
-              This prevents `tabs[activeTab]` (which is <Dashboard />) 
-              from mounting and calling fetchLaundryOrders() before 
-              the Beams auth in useEffect has finished. */}
-          <main>
-            {!isBeamsReady ? (
-              <Card title="Initializing...">
-                <p>Connecting to notification service...</p>
-              </Card>
-            ) : (
-              tabs[activeTab]
-            )}
-          </main>
-          {/* ++++++++++ END: MODIFIED CODE ++++++++++ */}
+          <main>{tabs[activeTab]}</main>
         </>
       )}
     </div>
