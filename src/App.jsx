@@ -19,14 +19,14 @@ const beamsTokenProvider = () => {
   const beamsAuthEndpoint = `${import.meta.env.VITE_API_BASE_URL}/ama/v1/beams-auth`;
   const nonce = localStorage.getItem("wpNonce");
 
-  return new PusherPushNotifications.TokenProvider({
+return new PusherPushNotifications.TokenProvider({
     url: beamsAuthEndpoint,
-    method: "POST", // <-- *** THIS IS THE CHANGE ***
+    method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "X-WP-Nonce": nonce || "",
+      // "X-WP-Nonce": nonce || "", // <-- REMOVE (or comment out) THIS LINE
     },
-    withCredentials: true,
+    withCredentials: false, // <-- *** CHANGE THIS TO FALSE ***
   });
 };
 
