@@ -13,19 +13,16 @@ import Account from "./pages/Account";
 import Login from "./pages/Login";
 import ToastNotification from "./components/Notification";
 import { logoutAdmin } from "./api/auth";
+import Card from "./components/Card"; // Import Card for the loading state
 
 // FIXED Beams Token Provider - uses GET with properly constructed URL
 const beamsTokenProvider = (userId) => {
   const beamsAuthEndpoint = `${import.meta.env.VITE_API_BASE_URL}/ama/v1/beams-auth`;
   const nonce = localStorage.getItem("wpNonce");
 
-  // ++++++++++ START: CORRECTED CODE ++++++++++
-  // Do not manually append user_id. The TokenProvider does this automatically.
-  // Passing the base endpoint URL resolves the 403 error.
   return new PusherPushNotifications.TokenProvider({
     url: beamsAuthEndpoint,
     method: "GET",
-    // ++++++++++ END: CORRECTED CODE ++++++++++
     headers: {
       "Content-Type": "application/json",
       "X-WP-Nonce": nonce || "",
@@ -34,7 +31,7 @@ const beamsTokenProvider = (userId) => {
   });
 };
 
-// Debug function to test Beams authentication
+// Debug function (left here for testing, but not used in the main flow)
 const debugBeamsAuth = async (userId) => {
   const beamsAuthEndpoint = `${import.meta.env.VITE_API_BASE_URL}/ama/v1/beams-auth`;
   const nonce = localStorage.getItem("wpNonce");
@@ -79,6 +76,12 @@ export default function App() {
   const [notification, setNotification] = useState(null);
   const beamsClientRef = useRef(null);
   const pusherChannelsRef = useRef(null);
+  
+  // ++++++++++ START: NEW CODE ++++++++++
+  // State to prevent dashboard from loading before Beams auth is complete
+  const [isBeamsReady, setIsBeamsReady] = useState(false);
+  // ++++++++++ END: NEW CODE ++++++++++
+
 
   // On initial load, check if user data exists in localStorage
   useEffect(() => {
@@ -111,7 +114,6 @@ export default function App() {
           disabledTransports: ['sockjs', 'xhr_streaming', 'xhr_polling'] // Disable problematic transports
         });
         
-        // Add connection state monitoring
         pusherChannelsRef.current.connection.bind('state_change', (states) => {
           console.log('Pusher Channels state change:', states);
         });
@@ -144,7 +146,6 @@ export default function App() {
       const beamsInstanceId = import.meta.env.VITE_PUSHER_BEAMS_INSTANCE_ID;
 
       if (beamsInstanceId) {
-        // Only initialize if the client isn't already stored in the ref
         if (!beamsClientRef.current) {
           beamsClientRef.current = new PusherPushNotifications.Client({
             instanceId: beamsInstanceId,
@@ -153,10 +154,6 @@ export default function App() {
 
         const beamsUserId = `admin_${user.id}`;
         
-        // --- START: MODIFIED CODE ---
-        // Removed the debugBeamsAuth() call from this promise chain.
-        // We let the Beams client make the *first* and *only* auth request
-        // to avoid invalidating the nonce.
         beamsClientRef.current.start()
           .then(() => {
             console.log("Pusher Beams client started successfully.");
@@ -167,6 +164,7 @@ export default function App() {
               console.log("Browser notification permission granted.");
               console.log(`Authenticating Beams for user: ${beamsUserId}`);
               
+              // This will now be the *first* request to use the nonce
               return beamsClientRef.current.setUserId(
                 beamsUserId,
                 beamsTokenProvider(beamsUserId)
@@ -182,20 +180,26 @@ export default function App() {
           })
           .then(() => {
             console.log("Successfully subscribed to 'new-orders' interest.");
+            // ++++++++++ START: NEW CODE ++++++++++
+            setIsBeamsReady(true); // Unblock the UI
+            // ++++++++++ END: NEW CODE ++++++++++
           })
           .catch((error) => {
             if (error.message !== "Permission denied") {
               console.error("Pusher Beams initialization error:", error);
-              
-              // Additional debug info
               console.log('Current user:', user);
               console.log('Beams Instance ID:', beamsInstanceId);
               console.log('API Base URL:', import.meta.env.VITE_API_BASE_URL);
             }
+            // ++++++++++ START: NEW CODE ++++++++++
+            setIsBeamsReady(true); // Unblock the UI even if Beams fails
+            // ++++++++++ END: NEW CODE ++++++++++
           });
-        // --- END: MODIFIED CODE ---
       } else {
         console.warn("Pusher Beams Instance ID not configured");
+        // ++++++++++ START: NEW CODE ++++++++++
+        setIsBeamsReady(true); // Unblock UI if Beams is not configured
+        // ++++++++++ END: NEW CODE ++++++++++
       }
     }
 
@@ -203,7 +207,6 @@ export default function App() {
     return () => {
       console.log("Cleaning up Pusher services...");
       
-      // Cleanup Pusher Channels
       if (pusherChannelsRef.current) {
         try {
           pusherChannelsRef.current.unsubscribe("orders-channel");
@@ -216,7 +219,6 @@ export default function App() {
         }
       }
 
-      // Cleanup Pusher Beams
       if (beamsClientRef.current) {
         beamsClientRef.current.stop()
           .then(() => console.log("Beams client stopped successfully"))
@@ -224,12 +226,15 @@ export default function App() {
         beamsClientRef.current = null;
       }
     };
-  }, [user]);
+  }, [user]); // This effect still only runs when `user` changes
 
   const handleLogin = (userData) => {
     localStorage.setItem("ama_user", JSON.stringify(userData));
     setUser(userData);
     setActiveTab("dashboard");
+    // ++++++++++ START: NEW CODE ++++++++++
+    setIsBeamsReady(false); // Reset on login
+    // ++++++++++ END: NEW CODE ++++++++++
   };
 
   const handleLogout = async () => {
@@ -268,7 +273,22 @@ export default function App() {
         <>
           <Header />
           <NavBar activeTab={activeTab} setActiveTab={setActiveTab} />
-          <main>{tabs[activeTab]}</main>
+          
+          {/* ++++++++++ START: MODIFIED CODE ++++++++++ */}
+          {/* We now conditionally render the main content.
+              This prevents `tabs[activeTab]` (which is <Dashboard />) 
+              from mounting and calling fetchLaundryOrders() before 
+              the Beams auth in useEffect has finished. */}
+          <main>
+            {!isBeamsReady ? (
+              <Card title="Initializing...">
+                <p>Connecting to notification service...</p>
+              </Card>
+            ) : (
+              tabs[activeTab]
+            )}
+          </main>
+          {/* ++++++++++ END: MODIFIED CODE ++++++++++ */}
         </>
       )}
     </div>
