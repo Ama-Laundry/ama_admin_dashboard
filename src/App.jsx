@@ -153,12 +153,11 @@ export default function App() {
 
         const beamsUserId = `admin_${user.id}`;
         
-        // Debug authentication first
-        debugBeamsAuth(beamsUserId)
-          .then(() => {
-            // If debug succeeds, proceed with normal Beams setup
-            return beamsClientRef.current.start();
-          })
+        // --- START: MODIFIED CODE ---
+        // Removed the debugBeamsAuth() call from this promise chain.
+        // We let the Beams client make the *first* and *only* auth request
+        // to avoid invalidating the nonce.
+        beamsClientRef.current.start()
           .then(() => {
             console.log("Pusher Beams client started successfully.");
             return Notification.requestPermission();
@@ -194,6 +193,7 @@ export default function App() {
               console.log('API Base URL:', import.meta.env.VITE_API_BASE_URL);
             }
           });
+        // --- END: MODIFIED CODE ---
       } else {
         console.warn("Pusher Beams Instance ID not configured");
       }
