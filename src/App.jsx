@@ -14,14 +14,14 @@ import Login from "./pages/Login";
 import ToastNotification from "./components/Notification";
 import { logoutAdmin } from "./api/auth";
 
-// CORRECTED Beams Token Provider - uses GET with properly constructed URL
+// CORRECTED Beams Token Provider - uses POST
 const beamsTokenProvider = () => {
   const beamsAuthEndpoint = `${import.meta.env.VITE_API_BASE_URL}/ama/v1/beams-auth`;
   const nonce = localStorage.getItem("wpNonce");
 
   return new PusherPushNotifications.TokenProvider({
     url: beamsAuthEndpoint,
-    method: "GET",
+    method: "POST", // <-- *** THIS IS THE CHANGE ***
     headers: {
       "Content-Type": "application/json",
       "X-WP-Nonce": nonce || "",
