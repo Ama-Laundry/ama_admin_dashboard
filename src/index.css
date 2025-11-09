@@ -87,7 +87,7 @@ h1 {
 }
 
 .sub {
-  @apply text-base text-black mt-1.5;
+  @apply text-base text-black mt-1.5 mb-4;
 }
 
 .brand-stripe {
