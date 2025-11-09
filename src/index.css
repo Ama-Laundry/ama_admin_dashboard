@@ -116,7 +116,7 @@ h1 {
 }
 
 .nav-link.active {
-  @apply bg-white/20 text-blue-500 shadow-lg;
+  @apply bg-white/90 text-blue-500 shadow-lg;
   box-shadow: 0 6px 20px rgba(0, 200, 255, 0.25);
 }
 
