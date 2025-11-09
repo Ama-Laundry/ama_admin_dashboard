@@ -1,0 +1,305 @@
+@import "tailwindcss";
+
+/* === Global Reset === */
+* {
+  @apply m-0 p-0 box-border;
+}
+
+html,
+body {
+  @apply h-auto font-sans antialiased overflow-x-hidden overflow-y-scroll;
+}
+
+/* body {
+  @apply flex flex-col items-center p-10 text-black;
+  background: linear-gradient(
+    120deg,
+    #9069fa,
+    #00aaff,
+    #10ecfc,
+    #00cfff,
+    #00aaff,
+    #a77fff,
+    #d16fff
+  );
+} */
+body {
+  font-family: "Poppins", sans-serif;
+  @apply text-black min-h-screen overflow-x-hidden antialiased relative;
+  background: linear-gradient(
+    120deg,
+    #9069fa,
+    #00aaff,
+    #10ecfc,
+    #00cfff,
+    #00aaff,
+    #a77fff,
+    #d16fff
+  );
+  background-size: 100% 100%;
+  background-attachment: fixed;
+  animation: gradientShift 20s ease infinite;
+  /* MODIFIED: Reduced base padding, will be adjusted for mobile */
+  padding: 2rem 1rem 4rem 1rem;
+}
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* === Container Wrapper === */
+.wrap {
+  /* MODIFIED: Changed from w-[88vw] to a responsive max-width */
+  @apply w-full max-w-7xl mx-auto px-2 sm:px-4 md:px-8;
+}
+
+/* === Fullscreen Dashboard === */
+.dashboard-page {
+  @apply w-full px-4 md:px-8 py-6;
+}
+
+/* === NEW: Responsive metric class === */
+.dashboard-metric {
+  @apply text-3xl md:text-5xl font-bold text-black;
+}
+
+/* === Header / Logo === */
+.header {
+  @apply text-center mb-10;
+}
+
+.header-logo-container {
+  @apply w-28 h-28 mx-auto rounded-3xl overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.35)];
+}
+
+.header-logo {
+  @apply w-full h-full object-cover;
+}
+
+.header-title {
+  /* MODIFIED: Made font size responsive */
+  @apply text-xl sm:text-2xl font-bold mt-3;
+}
+
+h1 {
+  /* MODIFIED: Made font size responsive */
+  @apply text-3xl sm:text-4xl font-extrabold mt-4;
+  text-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+}
+
+.sub {
+  @apply text-base mt-1.5;
+}
+
+.brand-stripe {
+  @apply w-56 h-1.5 mx-auto mt-4 rounded-full;
+  background: linear-gradient(90deg, #00a3ff, #00ffb7, #ffb86b, #8a5cff);
+  box-shadow: 0 4px 20px rgba(138, 92, 255, 0.25);
+}
+
+/* === Navigation Tabs === */
+.nav-bar {
+  @apply flex flex-wrap justify-between items-center p-4 my-8 mx-auto rounded-2xl border border-white shadow-white/75 shadow-2xl;
+  background-color: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(60px);
+}
+
+.nav-bar ul {
+  @apply flex flex-wrap gap-3 list-none;
+}
+
+.nav-link {
+  @apply px-4 py-2.5 text-sm font-semibold rounded-xl text-black transition-all duration-200 ease-in-out whitespace-nowrap no-underline;
+}
+
+.nav-link:hover {
+  @apply bg-white/5 text-black;
+}
+
+.nav-link.active {
+  @apply bg-white/20 text-white shadow-lg;
+  box-shadow: 0 6px 20px rgba(0, 200, 255, 0.25);
+}
+
+.nav-search input {
+  @apply w-full max-w-xs px-4 py-3 rounded-xl border border-white/10 text-sm;
+  backdrop-filter: blur(6px);
+}
+
+/* === Card Panel === */
+.card {
+  @apply border border-white rounded-2xl p-8 mb-7 shadow-white/50 shadow-2xl transition-transform duration-200 ease-in-out overflow-x-auto;
+  background-color: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(60px);
+}
+
+.card:hover {
+  @apply -translate-y-1;
+}
+
+.card h2 {
+  @apply text-xl font-bold mb-4 border-b border-white/10 pb-2;
+}
+
+/* === Table Styling === */
+table {
+  @apply w-full border-collapse mt-4 text-sm text-black;
+}
+
+th,
+td {
+  @apply p-3 text-left border-b border-white/10 whitespace-nowrap;
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+th:last-child,
+td:last-child {
+  border-right: none;
+}
+
+th {
+  @apply font-bold uppercase text-xs text-black;
+}
+
+tr:hover {
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0.04),
+    rgba(255, 255, 255, 0.02)
+  );
+}
+
+tr:nth-child(even) {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+/* === Status Pill === */
+.status {
+  @apply inline-block px-3 py-1.5 rounded-full font-semibold text-xs;
+  backdrop-filter: blur(4px);
+}
+
+.status-confirmed {
+  @apply bg-green-500/50 text-green-200;
+}
+
+.status-unconfirmed {
+  @apply bg-yellow-500/50 text-yellow-200;
+}
+
+/* === Form Inputs === */
+.form-input {
+  @apply w-full bg-slate-800 text-white border border-slate-600 rounded-lg px-4 py-2;
+}
+
+input[type="text"],
+input[type="password"],
+select {
+  @apply w-full px-4 py-3 mb-4 rounded-xl border border-white/10 bg-white/5 text-white text-base;
+  backdrop-filter: blur(6px);
+}
+
+input::placeholder {
+  @apply text-white/60;
+}
+
+/* === Buttons === */
+.btn-add {
+  @apply px-6 py-3 text-base font-semibold rounded-xl text-white border-none cursor-pointer transition-transform duration-200 ease-in-out bg-green-600 hover:bg-green-700;
+  box-shadow: 0 6px 20px rgba(0, 200, 255, 0.3);
+}
+
+.btn-danger {
+  @apply px-6 py-3 text-base font-semibold rounded-xl text-white border-none cursor-pointer transition-transform duration-200 ease-in-out bg-red-600 hover:bg-red-700;
+  box-shadow: 0 6px 20px rgba(0, 200, 255, 0.3);
+}
+
+.btn-edit {
+  @apply px-6 py-3 text-base font-semibold rounded-xl text-white border-none cursor-pointer transition-transform duration-200 ease-in-out bg-blue-600 hover:bg-blue-700;
+  box-shadow: 0 6px 20px rgba(0, 200, 255, 0.3);
+}
+
+.btn-add:hover,
+.btn-danger:hover,
+.btn-edit:hover {
+  @apply -translate-y-0.5;
+  box-shadow: 0 10px 30px rgba(0, 200, 255, 0.4);
+}
+
+/* === Responsive Fixes === */
+@media (max-width: 1024px) {
+  table {
+    @apply text-xs;
+  }
+
+  .card {
+    @apply p-6;
+  }
+
+  .dashboard-metric {
+    @apply text-3xl;
+  }
+}
+
+@media (max-width: 768px) {
+  /* ADDED: Reduce body padding on mobile */
+  body {
+    @apply p-4 pt-8;
+  }
+
+  /* ADDED: Reduce wrap padding on mobile */
+  .wrap {
+    @apply px-0 sm:px-0 md:px-2;
+  }
+
+  /* ADDED: Reduce card padding on mobile */
+  .card {
+    @apply p-4;
+  }
+
+  .nav-bar {
+    @apply flex-col gap-4 p-5;
+  }
+  .nav-bar ul {
+    @apply justify-center;
+  }
+  .nav-search input {
+    @apply w-full;
+  }
+  .orders-table-container thead {
+    @apply hidden;
+  }
+  .orders-table-container tr {
+    @apply block mb-5 bg-white/5 border-white border-2 rounded-lg overflow-hidden;
+    backdrop-filter: blur(60px);
+  }
+  .orders-table-container td {
+    @apply block text-right pl-[50%] relative border-b border-white/50 text-pretty;
+  }
+  .orders-table-container td:last-child {
+    @apply border-b-0;
+  }
+  .orders-table-container td::before {
+    content: attr(data-label);
+    @apply absolute left-4 font-bold uppercase text-xs;
+  }
+}
+
+/* === Scrollbar Styling === */
+.card::-webkit-scrollbar {
+  @apply h-1.5 w-1.5;
+}
+.card::-webkit-scrollbar-thumb {
+  @apply bg-white/20 rounded-full;
+}
+.card::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
