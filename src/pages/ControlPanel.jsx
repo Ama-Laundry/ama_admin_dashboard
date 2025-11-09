@@ -254,9 +254,9 @@ export default function ControlPanel() {
 
   return (
     <div className="space-y-8">
-      <header className="text-center m-4">
+      <header className="flex flex-col text-center m-4">
         <h1 className="text-3xl font-bold">Control Panel</h1>
-        <p className="sub mt-1 mb-1 pb-8">
+        <p className="sub mt-1 mb-4">
           Manage service availability, pricing, and payment options.
         </p>
       </header>
