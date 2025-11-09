@@ -66,8 +66,8 @@ const PaymentMethods = () => {
   }
 
   return (
-    <Card title="Payment Methods">
-      <div className="flex flex-col justify-between h-full">
+    <Card title="Payment Methods ">
+      <div className="flex flex-col justify-center h-full">
         {/* Top Section */}
         <div>
           <p className="sub">
@@ -112,7 +112,7 @@ const PaymentMethods = () => {
         </div>
 
         {/* Bottom Section (Button) */}
-        <div className="mt-6 text-right">
+        <div className="mt-6  text-right">
           <button
             onClick={handleSave}
             className="btn-add"
