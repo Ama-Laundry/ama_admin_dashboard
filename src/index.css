@@ -45,7 +45,7 @@ body {
 /* === Container Wrapper === */
 .wrap {
   /* MODIFIED: Changed from w-[88vw] to a responsive max-width */
-  @apply w-full max-w-7xl mx-auto px-2 sm:px-4 md:px-8;
+  @apply w-full max-w-[88vw] mx-auto px-2 sm:px-4 md:px-8;
 }
 
 /* === Fullscreen Dashboard === */
