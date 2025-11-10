@@ -36,14 +36,14 @@ export default function Login({ onLogin }) {
   };
 
   return (
-    <div className="login-container">
+    <div className="login-container flex flex-col items-center justify-center min-h-screen p-4 gap-8">
       <div className="header-logo-container">
         <img src={amaLogo} alt="AMA Logo" className="header-logo" />
       </div>
 
-      <div className="text-center mb-4">
+      <div className="text-center ">
         <h1 className="header-title">Admin Dashboard</h1>
-        <p className="header-subtitle mb-4">Manage laundry booking services.</p>
+        <p className="header-subtitle">Manage laundry booking services.</p>
       </div>
 
       <form onSubmit={handleSubmit} className="card login-form">
