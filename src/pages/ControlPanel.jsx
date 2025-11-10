@@ -13,6 +13,8 @@ import {
   createPickupSlot,
   deletePickupSlot,
   updateServicePrice,
+  // +++ IMPORT THE NEW FUNCTION +++
+  updateServiceName,
   getServices,
   updateServiceImage,
   deleteServiceImage,
@@ -110,6 +112,36 @@ export default function ControlPanel() {
       return () => clearTimeout(timer);
     }
   }, [recentlyUploaded]);
+
+  // +++ NEW: HANDLER FOR NAME CHANGE (UPDATES BOTH STATE ARRAYS) +++
+  const handleNameChange = (id, newName) => {
+    // Update the 'prices' state array
+    const updatedPrices = prices.map((item) =>
+      item.id === id ? { ...item, name: newName } : item
+    );
+    setPrices(updatedPrices);
+
+    // Update the 'services' state array (for the Service Images card)
+    const updatedServices = services.map((item) =>
+      item.id === id ? { ...item, name: newName } : item
+    );
+    setServices(updatedServices);
+  };
+
+  // +++ NEW: HANDLER FOR NAME UPDATE API CALL (ON BLUR) +++
+  const handleNameUpdateOnBlur = (id, name) => {
+    if (!name.trim()) {
+      setError("Service name cannot be empty.");
+      // Note: This doesn't revert the state, you might want to reload data
+      return;
+    }
+    updateServiceName(id, name).catch((err) => {
+      console.error("Failed to update name:", err);
+      setError(
+        "Failed to update service name. Check connection and try again."
+      );
+    });
+  };
 
   const handlePriceChange = (id, newPrice) => {
     const updatedPrices = prices.map((item) =>
@@ -301,7 +333,24 @@ export default function ControlPanel() {
             <div className="cp-list">
               {prices.map((item) => (
                 <div key={item.id} className="cp-list-item">
-                  <span className="item-name">{item.name}</span>
+                  {/* === MODIFICATION: Replaced span with input === */}
+                  <input
+                    type="text"
+                    value={item.name}
+                    onChange={(e) => handleNameChange(item.id, e.target.value)}
+                    onBlur={(e) =>
+                      handleNameUpdateOnBlur(item.id, e.target.value)
+                    }
+                    // Using existing classes to match layout and style
+                    // item-name: for flex-1 layout
+                    // form-input: for general input styling
+                    // !w-auto: overrides w-full from form-input
+                    // !text-left: overrides text-center from item-name
+                    className="item-name form-input !w-auto !text-left"
+                    aria-label={`Name for ${item.name}`}
+                  />
+                  {/* === END OF MODIFICATION === */}
+
                   <div className="item-actions">
                     {/* +++ THIS LINE IS NOW REMOVED +++ */}
                     {/* <span className="text-lg text-black mr-1">$</span> */}
@@ -331,6 +380,7 @@ export default function ControlPanel() {
             <div className="cp-list">
               {services.map((service) => (
                 <div key={service.id} className="cp-list-item">
+                  {/* This span will now update automatically */}
                   <span className="item-name">{service.name}</span>
                   <div className="item-actions">
                     {service.image ? (

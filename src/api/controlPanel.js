@@ -145,6 +145,14 @@ export const getServices = async () => {
   }
 };
 
+// +++ NEW FUNCTION TO UPDATE SERVICE NAME (POST TITLE) +++
+export const updateServiceName = (id, name) => {
+  return apiRequest(`service/${id}`, "POST", {
+    title: name,
+  });
+};
+// +++ END OF NEW FUNCTION +++
+
 export const updateServicePrice = (id, price) => {
   return apiRequest(`service/${id}`, "POST", {
     acf: {
