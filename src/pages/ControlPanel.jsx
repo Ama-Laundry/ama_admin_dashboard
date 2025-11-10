@@ -333,7 +333,10 @@ export default function ControlPanel() {
             <div className="cp-list">
               {prices.map((item) => (
                 <div key={item.id} className="cp-list-item">
-                  {/* === MODIFICATION: Replaced span with input === */}
+                  {/* ================================================================
+                    VVV   THIS IS THE LINE THAT WAS CHANGED   VVV
+                    ================================================================
+                  */}
                   <input
                     type="text"
                     value={item.name}
@@ -341,20 +344,15 @@ export default function ControlPanel() {
                     onBlur={(e) =>
                       handleNameUpdateOnBlur(item.id, e.target.value)
                     }
-                    // Using existing classes to match layout and style
-                    // item-name: for flex-1 layout
-                    // form-input: for general input styling
-                    // !w-auto: overrides w-full from form-input
-                    // !text-left: overrides text-center from item-name
-                    className="item-name form-input !w-auto !text-left"
+                    className="item-name form-input !w-auto !text-left text-black"
                     aria-label={`Name for ${item.name}`}
                   />
-                  {/* === END OF MODIFICATION === */}
+                  {/* ================================================================
+                    AAA   THIS IS THE LINE THAT WAS CHANGED   AAA
+                    ================================================================
+                  */}
 
                   <div className="item-actions">
-                    {/* +++ THIS LINE IS NOW REMOVED +++ */}
-                    {/* <span className="text-lg text-black mr-1">$</span> */}
-
                     <input
                       type="number"
                       value={item.price}
