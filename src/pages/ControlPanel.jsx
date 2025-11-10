@@ -333,10 +333,7 @@ export default function ControlPanel() {
             <div className="cp-list">
               {prices.map((item) => (
                 <div key={item.id} className="cp-list-item">
-                  {/* ================================================================
-                    VVV   THIS IS THE LINE THAT WAS CHANGED   VVV
-                    ================================================================
-                  */}
+                  {/* === MODIFICATION: Replaced span with input === */}
                   <input
                     type="text"
                     value={item.name}
@@ -344,15 +341,16 @@ export default function ControlPanel() {
                     onBlur={(e) =>
                       handleNameUpdateOnBlur(item.id, e.target.value)
                     }
-                    className="item-name form-input !w-auto !text-left text-black"
+                    // +++ FIX: Added '!text-black' to force override +++
+                    className="item-name form-input !w-auto !text-left !text-black"
                     aria-label={`Name for ${item.name}`}
                   />
-                  {/* ================================================================
-                    AAA   THIS IS THE LINE THAT WAS CHANGED   AAA
-                    ================================================================
-                  */}
+                  {/* === END OF MODIFICATION === */}
 
                   <div className="item-actions">
+                    {/* +++ THIS LINE IS NOW REMOVED +++ */}
+                    {/* <span className="text-lg text-black mr-1">$</span> */}
+
                     <input
                       type="number"
                       value={item.price}
