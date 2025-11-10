@@ -25,11 +25,22 @@ export default function Statistics() {
     refreshData();
   }, []);
 
-  // Improved date parsing that handles various formats
+  // +++ MODIFIED: Updated date parsing function +++
   const parseOrderDate = (dateString) => {
     if (!dateString || dateString === "—") return null;
 
     try {
+      // +++ NEW: Handle "YYYY-MM-DD HH:MM:SS" format +++
+      if (
+        dateString.length === 19 &&
+        dateString[10] === " " &&
+        dateString[4] === "-" &&
+        dateString[7] === "-"
+      ) {
+        const isoDateString = dateString.replace(" ", "T");
+        return new Date(isoDateString);
+      }
+
       // Handle Australian format: "17/09/2025, 3:23:27 am"
       if (dateString.includes("/") && dateString.includes(",")) {
         const [datePart, timePart] = dateString.split(", ");
@@ -92,7 +103,13 @@ export default function Statistics() {
     // Method 2: Fallback to string matching for month/year
     // Look for patterns like "/09/2025" (month/year)
     const monthYearPattern = `/${currentMonthFormatted}/${currentYearFormatted}`;
-    return order.order_timestamp.includes(monthYearPattern);
+    // +++ NEW: Also check for "YYYY-MM-" pattern
+    const yearMonthPattern = `${currentYearFormatted}-${currentMonthFormatted}`;
+
+    return (
+      order.order_timestamp.includes(monthYearPattern) ||
+      order.order_timestamp.startsWith(yearMonthPattern)
+    );
   });
 
   // Count cancelled orders for this month
@@ -167,15 +184,18 @@ export default function Statistics() {
   // Debug: Log what's being filtered
   useEffect(() => {
     if (orders.length > 0) {
-      console.log("=== STATISTICS DEBUGGING ===");
+      console.log("=== STATISTICS DEBUGGING (Statistics.jsx) ===");
       console.log("Total orders:", orders.length);
-      console.log("Completed orders:", completedOrders);
-      console.log("Pending orders:", pendingOrders);
-      console.log("Cancelled orders:", totalCancelledOrders);
-      console.log("Cancelled this month:", cancelledOrdersThisMonth);
-      console.log("Total revenue:", totalRevenue);
+      console.log("Orders this month:", ordersThisMonth.length);
+      console.log(
+        "Today orders details:",
+        ordersThisMonth.map((o) => ({
+          id: o.id,
+          timestamp: o.order_timestamp,
+        }))
+      );
     }
-  }, [orders]);
+  }, [orders, ordersThisMonth]);
 
   if (loading) {
     return (

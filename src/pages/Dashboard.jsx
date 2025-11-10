@@ -25,11 +25,24 @@ export default function Dashboard() {
     refreshData();
   }, []);
 
-  // Improved date parsing that handles various formats
+  // +++ MODIFIED: Updated date parsing function +++
   const parseOrderDate = (dateString) => {
     if (!dateString || dateString === "—") return null;
 
     try {
+      // +++ NEW: Handle "YYYY-MM-DD HH:MM:SS" format +++
+      // This format is not ISO standard, so new Date() can fail.
+      // We must replace the space with a 'T' to make it compatible.
+      if (
+        dateString.length === 19 &&
+        dateString[10] === " " &&
+        dateString[4] === "-" &&
+        dateString[7] === "-"
+      ) {
+        const isoDateString = dateString.replace(" ", "T");
+        return new Date(isoDateString);
+      }
+
       // Handle Australian format: "17/09/2025, 3:23:27 am"
       if (dateString.includes("/") && dateString.includes(",")) {
         const [datePart, timePart] = dateString.split(", ");
@@ -53,12 +66,13 @@ export default function Dashboard() {
         return new Date(isoDate);
       }
 
-      // Handle ISO format: "2025-09-16T21:31:36"
+      // Handle full ISO format (which new Date() handles natively)
+      // e.g., "2025-11-04T18:13:52.224Z"
       if (dateString.includes("T") && dateString.includes("-")) {
         return new Date(dateString);
       }
 
-      // Handle other formats or return null
+      // If no format matches, log it.
       console.warn("Unknown date format:", dateString);
       return null;
     } catch (error) {
@@ -100,19 +114,24 @@ export default function Dashboard() {
   // Debug: Log what's being filtered
   useEffect(() => {
     if (orders.length > 0) {
-      console.log("=== DATE DEBUGGING ===");
+      console.log("=== DATE DEBUGGING (Dashboard.jsx) ===");
       console.log("Today formatted:", todayFormatted);
       console.log("Total orders:", orders.length);
 
       orders.forEach((order, index) => {
-        const isToday =
-          order.order_timestamp &&
-          order.order_timestamp.includes(todayFormatted);
+        const orderDate = parseOrderDate(order.order_timestamp);
+        const isTodayByDate = orderDate
+          ? orderDate.getDate() === todayDay &&
+            orderDate.getMonth() === todayMonth &&
+            orderDate.getFullYear() === todayYear
+          : "parse_failed";
         console.log(
           `Order ${index}:`,
           order.order_timestamp,
+          "-> Parsed:",
+          orderDate,
           "-> Today?",
-          isToday
+          isTodayByDate
         );
       });
 
@@ -126,7 +145,7 @@ export default function Dashboard() {
         }))
       );
     }
-  }, [orders, todayFormatted]);
+  }, [orders, todayFormatted, todayDay, todayMonth, todayYear]); // Added dependencies to useEffect
 
   const pendingOrders = orders.filter(
     (order) => order.order_status !== "completed"
@@ -159,21 +178,17 @@ export default function Dashboard() {
   return (
     <>
       <Card title="Dashboard Overview">
-        {/* MODIFIED: Replaced inline style with responsive Tailwind classes */}
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           <p>
             Welcome back, Admin! Here's a quick summary of today's activity.
           </p>
-          {/* MODIFIED: Replaced inline style with responsive Tailwind classes */}
           <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
-            {/* MODIFIED: Replaced inline style with btn-edit class and responsive width */}
             <button
               onClick={refreshData}
               className="btn-edit w-full sm:w-auto text-sm py-2 px-4"
             >
               Refresh
             </button>
-            {/* MODIFIED: Replaced inline style with Tailwind classes */}
             <small className="text-slate-600 text-sm">
               Last updated: {lastUpdated.toLocaleTimeString()}
             </small>

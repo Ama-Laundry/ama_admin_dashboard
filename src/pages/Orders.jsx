@@ -2,11 +2,24 @@ import { useEffect, useState } from "react";
 import Card from "../components/Card";
 import { fetchLaundryOrders, updateOrderStatus } from "../api/bookings";
 
-// +++ ADDED: Date parsing function from Dashboard.jsx for consistency
+// +++ MODIFIED: Updated date parsing function +++
 const parseOrderDate = (dateString) => {
   if (!dateString || dateString === "—") return null;
 
   try {
+    // +++ NEW: Handle "YYYY-MM-DD HH:MM:SS" format +++
+    // This format is not ISO standard, so new Date() can fail.
+    // We must replace the space with a 'T' to make it compatible.
+    if (
+      dateString.length === 19 &&
+      dateString[10] === " " &&
+      dateString[4] === "-" &&
+      dateString[7] === "-"
+    ) {
+      const isoDateString = dateString.replace(" ", "T");
+      return new Date(isoDateString);
+    }
+
     // Handle Australian format: "17/09/2025, 3:23:27 am"
     if (dateString.includes("/") && dateString.includes(",")) {
       const [datePart, timePart] = dateString.split(", ");
@@ -30,12 +43,13 @@ const parseOrderDate = (dateString) => {
       return new Date(isoDate);
     }
 
-    // Handle ISO format: "2025-09-16T21:31:36"
+    // Handle full ISO format (which new Date() handles natively)
+    // e.g., "2025-11-04T18:13:52.224Z"
     if (dateString.includes("T") && dateString.includes("-")) {
       return new Date(dateString);
     }
 
-    // Handle other formats or return null
+    // If no format matches, log it.
     console.warn("Unknown date format:", dateString);
     return null;
   } catch (error) {
@@ -50,7 +64,6 @@ export default function Orders() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
-  // +++ MODIFIED: Added "today" as a possible view mode
   const [viewMode, setViewMode] = useState("today"); // "today", "all", "completed", "pending", "cancelled"
   const [filters, setFilters] = useState({
     customerName: "all",
@@ -104,8 +117,6 @@ export default function Orders() {
             }))
           );
           setOrders(data);
-          // +++ MODIFIED: Removed filter call from here.
-          // The new useEffect below will handle all filtering.
         }
         setLoading(false);
       })
@@ -116,7 +127,6 @@ export default function Orders() {
       });
   };
 
-  // +++ ADDED: This useEffect now handles ALL filtering logic
   useEffect(() => {
     let result = orders;
 
@@ -205,26 +215,22 @@ export default function Orders() {
 
   const handleStatusToggle = async (orderId, newStatus) => {
     try {
-      // Update local state immediately for better UX
       const updatedOrders = orders.map((order) =>
         order.id === orderId ? { ...order, order_status: newStatus } : order
       );
       setOrders(updatedOrders);
-      // +++ MODIFIED: No explicit filter call needed, useEffect will catch the 'orders' state change
 
-      // Try to update via API in the background
       try {
         await updateOrderStatus(orderId, newStatus);
         console.log("Order status updated successfully on server");
       } catch (apiError) {
         console.warn("API update failed:", apiError);
-        // Revert the UI change if API fails
         const revertedOrders = orders.map((order) =>
           order.id === orderId
             ? { ...order, order_status: order.order_status }
             : order
         );
-        setOrders(revertedOrders); // This will also trigger the useEffect
+        setOrders(revertedOrders);
         alert("Failed to update order status. Please try again.");
       }
     } catch (err) {
@@ -239,7 +245,6 @@ export default function Orders() {
     }
   };
 
-  // +++ MODIFIED: This button click handler now *only* updates the final filters
   const applyFilters = () => {
     setFilters({ ...tempFilters });
   };
@@ -252,7 +257,6 @@ export default function Orders() {
     }));
   };
 
-  // +++ MODIFIED: This now updates state, letting useEffect handle the filtering
   const resetFilters = () => {
     const resetValues = {
       customerName: "all",
@@ -275,7 +279,6 @@ export default function Orders() {
     setShowFilters(false);
   };
 
-  // +++ MODIFIED: This now *only* updates the viewMode state
   const handleViewModeChange = (mode) => {
     setViewMode(mode);
   };
@@ -315,7 +318,7 @@ export default function Orders() {
               {showFilters ? "Hide Filters" : "Show Filters"}
             </button>
 
-            {/* +++ ADDED: Today's Orders Button +++ */}
+            {/* Today's Orders Button */}
             <button
               onClick={() => handleViewModeChange("today")}
               style={{
@@ -410,7 +413,7 @@ export default function Orders() {
             </button>
           </div>
 
-          {/* Filter Section (No changes needed here) */}
+          {/* Filter Section */}
           {showFilters && (
             <div
               style={{
@@ -655,7 +658,7 @@ export default function Orders() {
             </div>
           )}
 
-          {/* Orders Table (No changes needed here) */}
+          {/* Orders Table */}
           {filteredOrders.length === 0 ? (
             <p style={{ color: "black" }}>No orders match your filters.</p>
           ) : (
