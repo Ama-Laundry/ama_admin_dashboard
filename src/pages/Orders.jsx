@@ -2,13 +2,56 @@ import { useEffect, useState } from "react";
 import Card from "../components/Card";
 import { fetchLaundryOrders, updateOrderStatus } from "../api/bookings";
 
+// +++ ADDED: Date parsing function from Dashboard.jsx for consistency
+const parseOrderDate = (dateString) => {
+  if (!dateString || dateString === "—") return null;
+
+  try {
+    // Handle Australian format: "17/09/2025, 3:23:27 am"
+    if (dateString.includes("/") && dateString.includes(",")) {
+      const [datePart, timePart] = dateString.split(", ");
+      const [day, month, year] = datePart.split("/");
+
+      // Convert to ISO format: "2025-09-17T03:23:27"
+      const timeParts = timePart.split(":");
+      let hours = parseInt(timeParts[0]);
+      const minutes = timeParts[1];
+      const seconds = timeParts[2].split(" ")[0];
+      const ampm = timePart.toLowerCase().includes("am") ? "am" : "pm";
+
+      // Convert 12h to 24h format
+      if (ampm === "pm" && hours < 12) hours += 12;
+      if (ampm === "am" && hours === 12) hours = 0;
+
+      const isoDate = `${year}-${month.padStart(2, "0")}-${day.padStart(
+        2,
+        "0"
+      )}T${hours.toString().padStart(2, "0")}:${minutes}:${seconds}`;
+      return new Date(isoDate);
+    }
+
+    // Handle ISO format: "2025-09-16T21:31:36"
+    if (dateString.includes("T") && dateString.includes("-")) {
+      return new Date(dateString);
+    }
+
+    // Handle other formats or return null
+    console.warn("Unknown date format:", dateString);
+    return null;
+  } catch (error) {
+    console.warn("Failed to parse date:", dateString, error);
+    return null;
+  }
+};
+
 export default function Orders() {
   const [orders, setOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
-  const [viewMode, setViewMode] = useState("all"); // "all", "completed", "pending", "cancelled"
+  // +++ MODIFIED: Added "today" as a possible view mode
+  const [viewMode, setViewMode] = useState("today"); // "today", "all", "completed", "pending", "cancelled"
   const [filters, setFilters] = useState({
     customerName: "all",
     campName: "all",
@@ -61,7 +104,8 @@ export default function Orders() {
             }))
           );
           setOrders(data);
-          applyViewModeFilter(viewMode, data);
+          // +++ MODIFIED: Removed filter call from here.
+          // The new useEffect below will handle all filtering.
         }
         setLoading(false);
       })
@@ -72,23 +116,92 @@ export default function Orders() {
       });
   };
 
-  const applyViewModeFilter = (mode, ordersList = orders) => {
-    let result = ordersList;
+  // +++ ADDED: This useEffect now handles ALL filtering logic
+  useEffect(() => {
+    let result = orders;
 
-    if (mode === "completed") {
+    // --- 1. Apply dropdown/text filters ---
+    if (filters.customerName !== "all") {
+      result = result.filter(
+        (order) => order.customer_name === filters.customerName
+      );
+    }
+    if (filters.campName !== "all") {
+      result = result.filter((order) => order.camp_name === filters.campName);
+    }
+    if (filters.roomNumber !== "all") {
+      result = result.filter(
+        (order) => order.room_number.toString() === filters.roomNumber
+      );
+    }
+    if (filters.service !== "all") {
+      result = result.filter((order) =>
+        order.services?.some((service) => service.name === filters.service)
+      );
+    }
+    if (filters.paymentStatus !== "all") {
+      const status = filters.paymentStatus === "confirmed";
+      result = result.filter((order) => order.payment_confirmed === status);
+    }
+    if (filters.pickupMethod !== "all") {
+      result = result.filter(
+        (order) => order.pickup_method === filters.pickupMethod
+      );
+    }
+    if (filters.minPrice) {
+      result = result.filter(
+        (order) =>
+          parseFloat(order.total_price || 0) >= parseFloat(filters.minPrice)
+      );
+    }
+    if (filters.maxPrice) {
+      result = result.filter(
+        (order) =>
+          parseFloat(order.total_price || 0) <= parseFloat(filters.maxPrice)
+      );
+    }
+
+    // --- 2. Apply View Mode filter ---
+    if (viewMode === "today") {
+      const today = new Date();
+      const todayDay = today.getDate();
+      const todayMonth = today.getMonth();
+      const todayYear = today.getFullYear();
+      const todayFormatted = `${todayDay.toString().padStart(2, "0")}/${(
+        todayMonth + 1
+      )
+        .toString()
+        .padStart(2, "0")}/${todayYear}`;
+
+      result = result.filter((order) => {
+        if (!order.order_timestamp || order.order_timestamp === "—")
+          return false;
+
+        const orderDate = parseOrderDate(order.order_timestamp);
+        if (orderDate) {
+          return (
+            orderDate.getDate() === todayDay &&
+            orderDate.getMonth() === todayMonth &&
+            orderDate.getFullYear() === todayYear
+          );
+        }
+        return order.order_timestamp.includes(todayFormatted);
+      });
+    } else if (viewMode === "completed") {
       result = result.filter((order) => order.order_status === "completed");
-    } else if (mode === "pending") {
+    } else if (viewMode === "pending") {
       result = result.filter(
         (order) =>
           order.order_status !== "completed" &&
           order.order_status !== "cancelled"
       );
-    } else if (mode === "cancelled") {
+    } else if (viewMode === "cancelled") {
       result = result.filter((order) => order.order_status === "cancelled");
     }
+    // 'all' mode does nothing and shows all filtered results
 
     setFilteredOrders(result);
-  };
+  }, [viewMode, filters, orders]); // Re-run whenever mode, filters, or orders change
 
   const handleStatusToggle = async (orderId, newStatus) => {
     try {
@@ -96,9 +209,8 @@ export default function Orders() {
       const updatedOrders = orders.map((order) =>
         order.id === orderId ? { ...order, order_status: newStatus } : order
       );
-
       setOrders(updatedOrders);
-      applyViewModeFilter(viewMode, updatedOrders);
+      // +++ MODIFIED: No explicit filter call needed, useEffect will catch the 'orders' state change
 
       // Try to update via API in the background
       try {
@@ -112,8 +224,7 @@ export default function Orders() {
             ? { ...order, order_status: order.order_status }
             : order
         );
-        setOrders(revertedOrders);
-        applyViewModeFilter(viewMode, revertedOrders);
+        setOrders(revertedOrders); // This will also trigger the useEffect
         alert("Failed to update order status. Please try again.");
       }
     } catch (err) {
@@ -128,74 +239,8 @@ export default function Orders() {
     }
   };
 
+  // +++ MODIFIED: This button click handler now *only* updates the final filters
   const applyFilters = () => {
-    let result = orders;
-
-    if (tempFilters.customerName !== "all") {
-      result = result.filter(
-        (order) => order.customer_name === tempFilters.customerName
-      );
-    }
-
-    if (tempFilters.campName !== "all") {
-      result = result.filter(
-        (order) => order.camp_name === tempFilters.campName
-      );
-    }
-
-    if (tempFilters.roomNumber !== "all") {
-      result = result.filter(
-        (order) => order.room_number.toString() === tempFilters.roomNumber
-      );
-    }
-
-    if (tempFilters.service !== "all") {
-      result = result.filter((order) =>
-        order.services?.some((service) => service.name === tempFilters.service)
-      );
-    }
-
-    if (tempFilters.paymentStatus !== "all") {
-      const status = tempFilters.paymentStatus === "confirmed";
-      result = result.filter((order) => order.payment_confirmed === status);
-    }
-
-    if (tempFilters.pickupMethod !== "all") {
-      result = result.filter(
-        (order) => order.pickup_method === tempFilters.pickupMethod
-      );
-    }
-
-    if (tempFilters.minPrice) {
-      result = result.filter(
-        (order) =>
-          parseFloat(order.total_price || 0) >= parseFloat(tempFilters.minPrice)
-      );
-    }
-
-    if (tempFilters.maxPrice) {
-      result = result.filter(
-        (order) =>
-          parseFloat(order.total_price || 0) <= parseFloat(tempFilters.maxPrice)
-      );
-    }
-
-    // Apply view mode filter after other filters
-    if (viewMode !== "all") {
-      if (viewMode === "completed") {
-        result = result.filter((order) => order.order_status === "completed");
-      } else if (viewMode === "pending") {
-        result = result.filter(
-          (order) =>
-            order.order_status !== "completed" &&
-            order.order_status !== "cancelled"
-        );
-      } else if (viewMode === "cancelled") {
-        result = result.filter((order) => order.order_status === "cancelled");
-      }
-    }
-
-    setFilteredOrders(result);
     setFilters({ ...tempFilters });
   };
 
@@ -207,6 +252,7 @@ export default function Orders() {
     }));
   };
 
+  // +++ MODIFIED: This now updates state, letting useEffect handle the filtering
   const resetFilters = () => {
     const resetValues = {
       customerName: "all",
@@ -220,18 +266,18 @@ export default function Orders() {
     };
     setTempFilters(resetValues);
     setFilters(resetValues);
-    applyViewModeFilter(viewMode, orders);
+    setViewMode("today"); // Default to today's orders
   };
 
   const clearAllFilters = () => {
     resetFilters();
-    setViewMode("all");
+    setViewMode("today"); // Default to today's orders
     setShowFilters(false);
   };
 
+  // +++ MODIFIED: This now *only* updates the viewMode state
   const handleViewModeChange = (mode) => {
     setViewMode(mode);
-    applyViewModeFilter(mode);
   };
 
   return (
@@ -269,13 +315,29 @@ export default function Orders() {
               {showFilters ? "Hide Filters" : "Show Filters"}
             </button>
 
+            {/* +++ ADDED: Today's Orders Button +++ */}
+            <button
+              onClick={() => handleViewModeChange("today")}
+              style={{
+                padding: "0.5rem 1rem",
+                backgroundColor: viewMode === "today" ? "#3b82f6" : "White",
+                color: viewMode === "today" ? "white" : "black", // White text when active
+                border: "none",
+                borderRadius: "0.375rem",
+                fontSize: "0.875rem",
+                cursor: "pointer",
+              }}
+            >
+              Today's Orders
+            </button>
+
             {/* View Mode Buttons */}
             <button
               onClick={() => handleViewModeChange("all")}
               style={{
                 padding: "0.5rem 1rem",
                 backgroundColor: viewMode === "all" ? "#3b82f6" : "White",
-                color: "black",
+                color: viewMode === "all" ? "white" : "black", // White text when active
                 border: "none",
                 borderRadius: "0.375rem",
                 fontSize: "0.875rem",
@@ -290,7 +352,7 @@ export default function Orders() {
               style={{
                 padding: "0.5rem 1rem",
                 backgroundColor: viewMode === "pending" ? "#f59e0b" : "White",
-                color: "black",
+                color: viewMode === "pending" ? "white" : "black", // White text when active
                 border: "none",
                 borderRadius: "0.375rem",
                 fontSize: "0.875rem",
@@ -305,7 +367,7 @@ export default function Orders() {
               style={{
                 padding: "0.5rem 1rem",
                 backgroundColor: viewMode === "completed" ? "#10b981" : "White",
-                color: "black",
+                color: viewMode === "completed" ? "white" : "black", // White text when active
                 border: "none",
                 borderRadius: "0.375rem",
                 fontSize: "0.875rem",
@@ -321,7 +383,7 @@ export default function Orders() {
               style={{
                 padding: "0.5rem 1rem",
                 backgroundColor: viewMode === "cancelled" ? "#ef4444" : "White",
-                color: "black",
+                color: viewMode === "cancelled" ? "white" : "black", // White text when active
                 border: "none",
                 borderRadius: "0.375rem",
                 fontSize: "0.875rem",
@@ -348,7 +410,7 @@ export default function Orders() {
             </button>
           </div>
 
-          {/* Filter Section */}
+          {/* Filter Section (No changes needed here) */}
           {showFilters && (
             <div
               style={{
@@ -593,8 +655,7 @@ export default function Orders() {
             </div>
           )}
 
-
-          {/* Orders Table */}
+          {/* Orders Table (No changes needed here) */}
           {filteredOrders.length === 0 ? (
             <p style={{ color: "black" }}>No orders match your filters.</p>
           ) : (
