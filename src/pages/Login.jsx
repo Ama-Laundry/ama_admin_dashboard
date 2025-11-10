@@ -41,9 +41,9 @@ export default function Login({ onLogin }) {
         <img src={amaLogo} alt="AMA Logo" className="header-logo" />
       </div>
 
-      <div className="text-center">
+      <div className="text-center mb-4">
         <h1 className="header-title">Admin Dashboard</h1>
-        <p className="header-subtitle">Manage laundry booking services.</p>
+        <p className="header-subtitle mb-4">Manage laundry booking services.</p>
       </div>
 
       <form onSubmit={handleSubmit} className="card login-form">

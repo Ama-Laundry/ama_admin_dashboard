@@ -70,9 +70,7 @@ export default function ControlPanel() {
 
         setPrices(settings.prices);
         setPickupSlots(settings.pickupSlots);
-        // ++++++++++ START: CORRECTED LINE ++++++++++
         setDailyAvailability(settings.dailyAvailability);
-        // ++++++++++ END: CORRECTED LINE ++++++++++
 
         // Initialize image version for each service
         const initialImageVersion = {};
@@ -305,7 +303,8 @@ export default function ControlPanel() {
                 <div key={item.id} className="cp-list-item">
                   <span className="item-name">{item.name}</span>
                   <div className="item-actions">
-                    <span className="text-lg text-slate-300">$</span>
+                    {/* +++ MODIFIED: Changed color and added margin +++ */}
+                    <span className="text-lg text-black mr-1">$</span>
                     <input
                       type="number"
                       value={item.price}
@@ -318,6 +317,10 @@ export default function ControlPanel() {
                       className="cp-input add-item-input"
                       aria-label={`Price for ${item.name}`}
                     />
+                    {/* +++ ADDED: Added AUD label for clarity +++ */}
+                    <span className="text-sm font-medium text-black ml-2">
+                      AUD
+                    </span>
                   </div>
                 </div>
               ))}
