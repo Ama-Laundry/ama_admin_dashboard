@@ -227,7 +227,7 @@ export default function Orders() {
         console.warn("API update failed:", apiError);
         const revertedOrders = orders.map((order) =>
           order.id === orderId
-            ? { ...order, order_status: order.order_status }
+            ? { ...order, order_status: order.order_status } // Revert to original status
             : order
         );
         setOrders(revertedOrders);
@@ -758,25 +758,29 @@ export default function Orders() {
                                 {order.order_status === "completed" ? "✓" : "?"}
                               </button>
 
-                              <button
-                                onClick={() => handleCancelOrder(order.id)}
-                                style={{
-                                  backgroundColor: "#ef4444",
-                                  color: "white",
-                                  border: "none",
-                                  borderRadius: "50%",
-                                  width: "30px",
-                                  height: "30px",
-                                  cursor: "pointer",
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                  fontSize: "16px",
-                                }}
-                                title="Cancel order"
-                              >
-                                ✕
-                              </button>
+                              {/* +++ MODIFICATION: Only show cancel button if order is NOT completed +++ */}
+                              {order.order_status !== "completed" && (
+                                <button
+                                  onClick={() => handleCancelOrder(order.id)}
+                                  style={{
+                                    backgroundColor: "#ef4444",
+                                    color: "white",
+                                    border: "none",
+                                    borderRadius: "50%",
+                                    width: "30px",
+                                    height: "30px",
+                                    cursor: "pointer",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    fontSize: "16px",
+                                  }}
+                                  title="Cancel order"
+                                >
+                                  ✕
+                                </button>
+                              )}
+                              {/* +++ END MODIFICATION +++ */}
                             </>
                           )}
 
