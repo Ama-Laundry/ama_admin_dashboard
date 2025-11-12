@@ -20,7 +20,9 @@ import { logoutAdmin } from "./api/auth";
 
 // CORRECTED Beams Token Provider - uses POST and sends Auth
 const beamsTokenProvider = () => {
-  const beamsAuthEndpoint = `${import.meta.env.VITE_API_BASE_URL}/ama/v1/beams-auth`;
+  const beamsAuthEndpoint = `${
+    import.meta.env.VITE_API_BASE_URL
+  }/ama/v1/beams-auth`;
   const nonce = localStorage.getItem("wpNonce");
 
   return new PusherPushNotifications.TokenProvider({
@@ -40,45 +42,47 @@ const beamsTokenProvider = () => {
 
 // Debug function to test Beams authentication
 const debugBeamsAuth = async (userId) => {
-  const beamsAuthEndpoint = `${import.meta.env.VITE_API_BASE_URL}/ama/v1/beams-auth`;
+  const beamsAuthEndpoint = `${
+    import.meta.env.VITE_API_BASE_URL
+  }/ama/v1/beams-auth`;
   const nonce = localStorage.getItem("wpNonce");
-  
+
   // Test both with and without user_id parameter
   const urlWithParam = new URL(beamsAuthEndpoint);
-  urlWithParam.searchParams.append('user_id', userId);
-  
+  urlWithParam.searchParams.append("user_id", userId);
+
   const urlWithoutParam = new URL(beamsAuthEndpoint);
 
-  console.log('🔍 Debug Beams Auth - Testing endpoints:');
-  console.log('With user_id param:', urlWithParam.toString());
-  console.log('Without user_id param:', urlWithoutParam.toString());
-  console.log('Nonce:', nonce ? 'Present' : 'Missing');
+  console.log("🔍 Debug Beams Auth - Testing endpoints:");
+  console.log("With user_id param:", urlWithParam.toString());
+  console.log("Without user_id param:", urlWithoutParam.toString());
+  console.log("Nonce:", nonce ? "Present" : "Missing");
 
   try {
     // Test without user_id first (how Beams actually calls it)
-    console.log('Testing endpoint WITHOUT user_id parameter...');
+    console.log("Testing endpoint WITHOUT user_id parameter...");
     const response = await fetch(urlWithoutParam.toString(), {
-      method: 'GET',
+      method: "GET",
       headers: {
-        'Content-Type': 'application/json',
-        'X-WP-Nonce': nonce || '',
+        "Content-Type": "application/json",
+        "X-WP-Nonce": nonce || "",
       },
-      credentials: 'include',
+      credentials: "include",
     });
 
-    console.log('Response status:', response.status);
-    
+    console.log("Response status:", response.status);
+
     if (!response.ok) {
       const errorText = await response.text();
-      console.log('Error response:', errorText);
+      console.log("Error response:", errorText);
       throw new Error(`HTTP ${response.status}: ${errorText}`);
     }
 
     const data = await response.json();
-    console.log('Success:', data);
+    console.log("Success:", data);
     return data;
   } catch (error) {
-    console.error('Debug Beams Auth - Failed:', error);
+    console.error("Debug Beams Auth - Failed:", error);
     throw error;
   }
 };
@@ -86,12 +90,15 @@ const debugBeamsAuth = async (userId) => {
 export default function App() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [user, setUser] = useState(null);
-  
+
   // +++ MODIFICATION: Store full notification object, not just message +++
   const [notificationData, setNotificationData] = useState(null); // Will be { message, orderId }
-  
+
   // +++ NEW: Add state for highlighting the order +++
   const [highlightOrderId, setHighlightOrderId] = useState(null);
+
+  // +++ NEW: State to trigger order list refresh +++
+  const [lastOrderTimestamp, setLastOrderTimestamp] = useState(null);
 
   const beamsClientRef = useRef(null);
   const pusherChannelsRef = useRef(null);
@@ -123,39 +130,43 @@ export default function App() {
       if (pusherKey && pusherCluster) {
         pusherChannelsRef.current = new Pusher(pusherKey, {
           cluster: pusherCluster,
-          enabledTransports: ['ws', 'wss'], // Explicitly enable WebSocket transport
-          disabledTransports: ['sockjs', 'xhr_streaming', 'xhr_polling'] // Disable problematic transports
+          enabledTransports: ["ws", "wss"], // Explicitly enable WebSocket transport
+          disabledTransports: ["sockjs", "xhr_streaming", "xhr_polling"], // Disable problematic transports
         });
-        
+
         // Add connection state monitoring
-        pusherChannelsRef.current.connection.bind('state_change', (states) => {
-          console.log('Pusher Channels state change:', states);
+        pusherChannelsRef.current.connection.bind("state_change", (states) => {
+          console.log("Pusher Channels state change:", states);
         });
-        
-        pusherChannelsRef.current.connection.bind('error', (error) => {
-          console.error('Pusher Channels connection error:', error);
+
+        pusherChannelsRef.current.connection.bind("error", (error) => {
+          console.error("Pusher Channels connection error:", error);
         });
 
         const channel = pusherChannelsRef.current.subscribe("orders-channel");
-        
-        channel.bind('pusher:subscription_succeeded', () => {
-          console.log('Pusher Channels subscription succeeded');
+
+        channel.bind("pusher:subscription_succeeded", () => {
+          console.log("Pusher Channels subscription succeeded");
         });
-        
-        channel.bind('pusher:subscription_error', (error) => {
-          console.error('Pusher Channels subscription error:', error);
+
+        channel.bind("pusher:subscription_error", (error) => {
+          console.error("Pusher Channels subscription error:", error);
         });
-        
+
         channel.bind("new-order", (data) => {
           console.log("Pusher Channels: New Order Received", data);
-          
+
           // +++ MODIFICATION: Store message and order ID +++
           setNotificationData({
             message: data.message,
             orderId: data.new_order_id,
           });
+
+          // +++ NEW: Trigger a refresh in the Orders component +++
+          // This updates the prop, causing Orders.jsx's useEffect to re-run.
+          setLastOrderTimestamp(Date.now());
         });
-        
+
         console.log("Pusher Channels initialized successfully");
       } else {
         console.warn("Pusher Channel keys not configured");
@@ -173,8 +184,9 @@ export default function App() {
         }
 
         const beamsUserId = `admin_${user.id}`;
-        
-        beamsClientRef.current.start()
+
+        beamsClientRef.current
+          .start()
           .then(() => {
             console.log("Pusher Beams client started successfully.");
             return Notification.requestPermission();
@@ -183,7 +195,7 @@ export default function App() {
             if (permission === "granted") {
               console.log("Browser notification permission granted.");
               console.log(`Authenticating Beams for user: ${beamsUserId}`);
-              
+
               // Use the corrected token provider without userId parameter
               return beamsClientRef.current.setUserId(
                 beamsUserId,
@@ -204,12 +216,12 @@ export default function App() {
           .catch((error) => {
             if (error.message !== "Permission denied") {
               console.error("Pusher Beams initialization error:", error);
-              
+
               // Additional debug info
-              console.log('Current user:', user);
-              console.log('Beams Instance ID:', beamsInstanceId);
-              console.log('API Base URL:', import.meta.env.VITE_API_BASE_URL);
-              
+              console.log("Current user:", user);
+              console.log("Beams Instance ID:", beamsInstanceId);
+              console.log("API Base URL:", import.meta.env.VITE_API_BASE_URL);
+
               // Debug: Test the auth endpoint directly
               debugBeamsAuth(beamsUserId).catch(console.error);
             }
@@ -222,7 +234,7 @@ export default function App() {
     // Cleanup Function
     return () => {
       console.log("Cleaning up Pusher services...");
-      
+
       // Cleanup Pusher Channels
       if (pusherChannelsRef.current) {
         try {
@@ -238,7 +250,8 @@ export default function App() {
 
       // Cleanup Pusher Beams
       if (beamsClientRef.current) {
-        beamsClientRef.current.stop()
+        beamsClientRef.current
+          .stop()
           .then(() => console.log("Beams client stopped successfully"))
           .catch((e) => console.error("Error stopping Beams client:", e));
         beamsClientRef.current = null;
@@ -276,11 +289,12 @@ export default function App() {
 
   const tabs = {
     dashboard: <Dashboard />,
-    // +++ MODIFICATION: Pass highlight state to Orders page +++
+    // +++ MODIFICATION: Pass highlight state AND refresh trigger to Orders page +++
     orders: (
       <Orders
         highlightOrderId={highlightOrderId}
         setHighlightOrderId={setHighlightOrderId}
+        lastOrderTimestamp={lastOrderTimestamp}
       />
     ),
     camps: <Camps />,

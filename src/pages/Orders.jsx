@@ -58,8 +58,12 @@ const parseOrderDate = (dateString) => {
   }
 };
 
-// +++ MODIFICATION: Accept props from App.jsx +++
-export default function Orders({ highlightOrderId, setHighlightOrderId }) {
+// +++ MODIFICATION: Accept props from App.jsx, including lastOrderTimestamp +++
+export default function Orders({
+  highlightOrderId,
+  setHighlightOrderId,
+  lastOrderTimestamp,
+}) {
   const [orders, setOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -104,9 +108,10 @@ export default function Orders({ highlightOrderId, setHighlightOrderId }) {
     ...new Set(orders.map((order) => order.pickup_method).filter(Boolean)),
   ];
 
+  // +++ MODIFICATION: This useEffect now runs on mount AND when lastOrderTimestamp changes +++
   useEffect(() => {
     fetchOrders();
-  }, []);
+  }, [lastOrderTimestamp]); // This prop change will trigger a re-fetch
 
   // +++ THIS IS THE NEW HIGHLIGHTING LOGIC +++
   useEffect(() => {
