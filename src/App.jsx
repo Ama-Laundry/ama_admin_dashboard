@@ -86,7 +86,13 @@ const debugBeamsAuth = async (userId) => {
 export default function App() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [user, setUser] = useState(null);
-  const [notification, setNotification] = useState(null);
+  
+  // +++ MODIFICATION: Store full notification object, not just message +++
+  const [notificationData, setNotificationData] = useState(null); // Will be { message, orderId }
+  
+  // +++ NEW: Add state for highlighting the order +++
+  const [highlightOrderId, setHighlightOrderId] = useState(null);
+
   const beamsClientRef = useRef(null);
   const pusherChannelsRef = useRef(null);
 
@@ -142,7 +148,12 @@ export default function App() {
         
         channel.bind("new-order", (data) => {
           console.log("Pusher Channels: New Order Received", data);
-          setNotification(data.message);
+          
+          // +++ MODIFICATION: Store message and order ID +++
+          setNotificationData({
+            message: data.message,
+            orderId: data.new_order_id,
+          });
         });
         
         console.log("Pusher Channels initialized successfully");
@@ -248,14 +259,30 @@ export default function App() {
       console.error("Logout error:", error);
     } finally {
       setUser(null);
-      setNotification(null);
+      // +++ MODIFICATION: Clear full notification object +++
+      setNotificationData(null);
       localStorage.removeItem("ama_user");
+    }
+  };
+
+  // +++ NEW: Click handler for the notification +++
+  const handleNotificationClick = () => {
+    if (notificationData && notificationData.orderId) {
+      setActiveTab("orders");
+      setHighlightOrderId(notificationData.orderId);
+      setNotificationData(null); // Close notification on click
     }
   };
 
   const tabs = {
     dashboard: <Dashboard />,
-    orders: <Orders />,
+    // +++ MODIFICATION: Pass highlight state to Orders page +++
+    orders: (
+      <Orders
+        highlightOrderId={highlightOrderId}
+        setHighlightOrderId={setHighlightOrderId}
+      />
+    ),
     camps: <Camps />,
     statistics: <Statistics />,
     control: <ControlPanel />,
@@ -264,10 +291,12 @@ export default function App() {
 
   return (
     <div className="wrap">
-      {notification && (
+      {/* +++ MODIFICATION: Pass click handler to ToastNotification +++ */}
+      {notificationData && (
         <ToastNotification
-          message={notification}
-          onClose={() => setNotification(null)}
+          message={notificationData.message}
+          onClose={() => setNotificationData(null)}
+          onClick={handleNotificationClick}
         />
       )}
 

@@ -58,7 +58,8 @@ const parseOrderDate = (dateString) => {
   }
 };
 
-export default function Orders() {
+// +++ MODIFICATION: Accept props from App.jsx +++
+export default function Orders({ highlightOrderId, setHighlightOrderId }) {
   const [orders, setOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -102,6 +103,39 @@ export default function Orders() {
   useEffect(() => {
     fetchOrders();
   }, []);
+
+  // +++ NEW: Effect to handle highlighting +++
+  useEffect(() => {
+    if (highlightOrderId) {
+      // Find the element to highlight.
+      const rowToHighlight = document.querySelector(
+        `tr[data-order-id='${highlightOrderId}']`
+      );
+
+      if (rowToHighlight) {
+        // Add highlight class
+        rowToHighlight.classList.add("highlight-order");
+
+        // Scroll to it
+        rowToHighlight.scrollIntoView({ behavior: "smooth", block: "center" });
+
+        // Remove highlight after a few seconds
+        const timer = setTimeout(() => {
+          rowToHighlight.classList.remove("highlight-order");
+          setHighlightOrderId(null); // Clear the highlight state in App.jsx
+        }, 3000); // Highlight for 3 seconds
+
+        return () => clearTimeout(timer);
+      } else {
+        // If the row isn't rendered (e.g., on a different filter page),
+        // we can't highlight it. We'll just clear the ID after a moment.
+        const timer = setTimeout(() => {
+          setHighlightOrderId(null);
+        }, 500);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [highlightOrderId, setHighlightOrderId, filteredOrders]); // Re-run if ID or filtered list changes
 
   const fetchOrders = () => {
     fetchLaundryOrders()
@@ -683,7 +717,8 @@ export default function Orders() {
                 </thead>
                 <tbody>
                   {filteredOrders.map((order, index) => (
-                    <tr key={order.id}>
+                    // +++ MODIFICATION: Add data-order-id attribute +++
+                    <tr key={order.id} data-order-id={order.id}>
                       <td data-label="#">{index + 1}</td>
                       {/* +++ MODIFIED: Data label and content changed +++ */}
                       <td data-label="Receipt #">
