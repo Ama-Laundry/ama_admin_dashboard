@@ -66,7 +66,9 @@ export default function Orders({ highlightOrderId, setHighlightOrderId }) {
   const [error, setError] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useState("today"); // "today", "all", "completed", "pending", "cancelled"
-  const [filters, setFilters] = useState({
+
+  // Define the reset state for filters
+  const initialFilters = {
     customerName: "all",
     campName: "all",
     roomNumber: "all",
@@ -75,7 +77,9 @@ export default function Orders({ highlightOrderId, setHighlightOrderId }) {
     pickupMethod: "all",
     minPrice: "",
     maxPrice: "",
-  });
+  };
+
+  const [filters, setFilters] = useState(initialFilters);
   const [tempFilters, setTempFilters] = useState({ ...filters });
 
   const uniqueCustomerNames = [
@@ -104,38 +108,49 @@ export default function Orders({ highlightOrderId, setHighlightOrderId }) {
     fetchOrders();
   }, []);
 
-  // +++ NEW: Effect to handle highlighting +++
+  // +++ THIS IS THE NEW HIGHLIGHTING LOGIC +++
   useEffect(() => {
     if (highlightOrderId) {
-      // Find the element to highlight.
-      const rowToHighlight = document.querySelector(
-        `tr[data-order-id='${highlightOrderId}']`
-      );
+      // Check if the order is already in the currently filtered list
+      const orderInList = filteredOrders.find((o) => o.id === highlightOrderId);
 
-      if (rowToHighlight) {
-        // Add highlight class
-        rowToHighlight.classList.add("highlight-order");
+      if (orderInList) {
+        // Order is in the list, try to find it in the DOM
+        const rowToHighlight = document.querySelector(
+          `tr[data-order-id='${highlightOrderId}']`
+        );
 
-        // Scroll to it
-        rowToHighlight.scrollIntoView({ behavior: "smooth", block: "center" });
+        if (rowToHighlight) {
+          // SUCCESS: Found it! Highlight and set cleanup.
+          rowToHighlight.classList.add("highlight-order");
+          rowToHighlight.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+          });
 
-        // Remove highlight after a few seconds
-        const timer = setTimeout(() => {
-          rowToHighlight.classList.remove("highlight-order");
-          setHighlightOrderId(null); // Clear the highlight state in App.jsx
-        }, 3000); // Highlight for 3 seconds
+          const timer = setTimeout(() => {
+            rowToHighlight.classList.remove("highlight-order");
+            setHighlightOrderId(null); // Clear the ID *only* after success
+          }, 3000); // Highlight for 3 seconds
 
-        return () => clearTimeout(timer);
+          return () => clearTimeout(timer);
+        }
+        // If rowToHighlight is null, the DOM hasn't updated yet.
+        // We do nothing and let the effect re-run when it does.
       } else {
-        // If the row isn't rendered (e.g., on a different filter page),
-        // we can't highlight it. We'll just clear the ID after a moment.
-        const timer = setTimeout(() => {
-          setHighlightOrderId(null);
-        }, 500);
-        return () => clearTimeout(timer);
+        // Order is NOT in the list. Force filters to 'all'.
+        // This will trigger a re-render and re-run this effect.
+        console.log(
+          `Order ${highlightOrderId} not found in view, switching to "All Orders".`
+        );
+        setViewMode("all");
+        setFilters(initialFilters);
+        setTempFilters(initialFilters);
+        setShowFilters(true); // Show user what happened
       }
     }
-  }, [highlightOrderId, setHighlightOrderId, filteredOrders]); // Re-run if ID or filtered list changes
+  }, [highlightOrderId, filteredOrders, setHighlightOrderId, initialFilters]); // Dependencies
+  // +++ END OF NEW HIGHLIGHTING LOGIC +++
 
   const fetchOrders = () => {
     fetchLaundryOrders()
@@ -292,18 +307,8 @@ export default function Orders({ highlightOrderId, setHighlightOrderId }) {
   };
 
   const resetFilters = () => {
-    const resetValues = {
-      customerName: "all",
-      campName: "all",
-      roomNumber: "all",
-      service: "all",
-      paymentStatus: "all",
-      pickupMethod: "all",
-      minPrice: "",
-      maxPrice: "",
-    };
-    setTempFilters(resetValues);
-    setFilters(resetValues);
+    setTempFilters(initialFilters);
+    setFilters(initialFilters);
     setViewMode("today"); // Default to today's orders
   };
 
