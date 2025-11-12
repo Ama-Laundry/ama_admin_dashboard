@@ -58,6 +58,58 @@ const parseOrderDate = (dateString) => {
   }
 };
 
+//
+// ++++++++++ START OF MODIFICATION ++++++++++
+//
+
+/**
+ * Formats a UTC timestamp string (from WordPress) to Perth (AWST) time.
+ * Assumes the input "YYYY-MM-DD HH:MM:SS" is in UTC.
+ */
+const formatUTCToPerth = (utcDateString) => {
+  if (!utcDateString || utcDateString === "—") return "—";
+
+  // Check if it matches the "YYYY-MM-DD HH:MM:SS" format from WordPress
+  if (
+    utcDateString.length === 19 &&
+    utcDateString[10] === " " &&
+    utcDateString[4] === "-" &&
+    utcDateString[7] === "-"
+  ) {
+    try {
+      // Create a UTC date object by replacing the space and appending 'Z'
+      const isoDateString = utcDateString.replace(" ", "T") + "Z";
+      const dateObj = new Date(isoDateString);
+
+      // Define options for Perth (UTC+8)
+      const options = {
+        timeZone: "Australia/Perth",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false, // Use 24-hour format to match the original
+      };
+
+      // Use 'en-CA' locale to get the YYYY-MM-DD format, then replace the comma
+      return dateObj.toLocaleString("en-CA", options).replace(",", "");
+    } catch (error) {
+      console.warn("Failed to format date string:", utcDateString, error);
+      return utcDateString; // Return original string on error
+    }
+  }
+
+  // For any other format (like "17/09/2025..." or full ISO),
+  // return it as-is because we can't be sure of its source timezone.
+  return utcDateString;
+};
+
+//
+// ++++++++++  END OF MODIFICATION  ++++++++++
+//
+
 // +++ MODIFICATION: Accept props from App.jsx, including lastOrderTimestamp +++
 export default function Orders({
   highlightOrderId,
@@ -743,9 +795,18 @@ export default function Orders({
                       <td data-label="Receipt #">
                         {order.receipt_number || order.id}
                       </td>
+
+                      {/*
+                        // ++++++++++ START OF MODIFICATION ++++++++++
+                      */}
                       <td data-label="Timestamp">
-                        {order.order_timestamp || "—"}
+                        {/* Use the new formatter function here */}
+                        {formatUTCToPerth(order.order_timestamp)}
                       </td>
+                      {/*
+                        // ++++++++++  END OF MODIFICATION  ++++++++++
+                      */}
+
                       <td data-label="Customer Name">
                         {order.customer_name || "—"}
                       </td>
