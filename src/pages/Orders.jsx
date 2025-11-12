@@ -628,6 +628,11 @@ export default function Orders({
                   </select>
                 </div>
 
+                {/* *
+                 * ++++++++++ START OF MODIFICATION ++++++++++
+                 *
+                 */}
+
                 {/* Min Price */}
                 <div style={{ display: "flex", flexDirection: "column" }}>
                   <label htmlFor="minPrice" style={{ color: "black" }}>
@@ -639,7 +644,7 @@ export default function Orders({
                     name="minPrice"
                     value={tempFilters.minPrice}
                     onChange={handleFilterChange}
-                    placeholder="Min price"
+                    placeholder="e.g., 10"
                     style={{ color: "black" }}
                   />
                 </div>
@@ -655,10 +660,14 @@ export default function Orders({
                     name="maxPrice"
                     value={tempFilters.maxPrice}
                     onChange={handleFilterChange}
-                    placeholder="Max price"
+                    placeholder="e.g., 50"
                     style={{ color: "black" }}
                   />
                 </div>
+                {/* *
+                 * ++++++++++  END OF MODIFICATION  ++++++++++
+                 *
+                 */}
               </div>
 
               <div

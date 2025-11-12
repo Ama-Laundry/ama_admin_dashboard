@@ -196,12 +196,24 @@ tr:nth-child(even) {
   @apply w-full bg-white/50 text-black border border-white rounded-lg px-4 py-2;
 }
 
+/* *
+ * ++++++++++ START OF MODIFICATION ++++++++++
+ *
+ */
+
+/* Added input[type="number"] to this selector */
 input[type="text"],
 input[type="password"],
+input[type="number"],
 select {
   @apply w-full px-4 py-3 mb-4 rounded-xl border border-white/10 bg-white/5 text-white text-base;
   backdrop-filter: blur(6px);
 }
+
+/* *
+ * ++++++++++  END OF MODIFICATION  ++++++++++
+ *
+ */
 
 input::placeholder {
   @apply text-black;
