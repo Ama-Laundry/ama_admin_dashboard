@@ -1,3 +1,4 @@
+// ama-laundry/ama_admin_dashboard/ama_admin_dashboard-ce942b84ce03ba042e73044853e131e6a8b4b618/src/pages/Orders.jsx
 import { useEffect, useState } from "react";
 import Card from "../components/Card";
 import { fetchLaundryOrders, updateOrderStatus } from "../api/bookings";
@@ -78,6 +79,7 @@ const formatUTCToPerth = (utcDateString) => {
   ) {
     try {
       // Create a UTC date object by replacing the space and appending 'Z'
+      // This converts "2025-11-12 16:14:39" -> "2025-11-12T16:14:39Z"
       const isoDateString = utcDateString.replace(" ", "T") + "Z";
       const dateObj = new Date(isoDateString);
 
@@ -94,6 +96,7 @@ const formatUTCToPerth = (utcDateString) => {
       };
 
       // Use 'en-CA' locale to get the YYYY-MM-DD format, then replace the comma
+      // This will output "2025-11-13 00:14:39"
       return dateObj.toLocaleString("en-CA", options).replace(",", "");
     } catch (error) {
       console.warn("Failed to format date string:", utcDateString, error);
@@ -101,7 +104,7 @@ const formatUTCToPerth = (utcDateString) => {
     }
   }
 
-  // For any other format (like "17/09/2025..." or full ISO),
+  // For any other format (like "17/09/2025..."),
   // return it as-is because we can't be sure of its source timezone.
   return utcDateString;
 };
