@@ -667,7 +667,8 @@ export default function Orders() {
                 <thead>
                   <tr>
                     <th>#</th>
-                    <th>Order ID</th>
+                    {/* +++ MODIFIED: Header text changed +++ */}
+                    <th>Receipt #</th>
                     <th>Timestamp</th>
                     <th>Customer Name</th>
                     <th>Camp Name</th>
@@ -684,7 +685,10 @@ export default function Orders() {
                   {filteredOrders.map((order, index) => (
                     <tr key={order.id}>
                       <td data-label="#">{index + 1}</td>
-                      <td data-label="Order ID">{order.id}</td>
+                      {/* +++ MODIFIED: Data label and content changed +++ */}
+                      <td data-label="Receipt #">
+                        {order.receipt_number || order.id}
+                      </td>
                       <td data-label="Timestamp">
                         {order.order_timestamp || "—"}
                       </td>
