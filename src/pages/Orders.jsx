@@ -82,18 +82,21 @@ const formatUTCToPerth = (utcDateString) => {
       const isoDateString = utcDateString.replace(" ", "T") + "Z";
       const dateObj = new Date(isoDateString);
 
-      // Convert to Perth time (UTC+8) by adding 8 hours
-      const perthTime = new Date(dateObj.getTime() + 8 * 60 * 60 * 1000);
+      // Define options for Perth (UTC+8)
+      const options = {
+        timeZone: "Australia/Perth",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false, // Use 24-hour format to match the original
+      };
 
-      // Format as "YYYY-MM-DD HH:MM:SS" to match the original format
-      const year = perthTime.getUTCFullYear();
-      const month = String(perthTime.getUTCMonth() + 1).padStart(2, "0");
-      const day = String(perthTime.getUTCDate()).padStart(2, "0");
-      const hours = String(perthTime.getUTCHours()).padStart(2, "0");
-      const minutes = String(perthTime.getUTCMinutes()).padStart(2, "0");
-      const seconds = String(perthTime.getUTCSeconds()).padStart(2, "0");
-
-      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+      // Use 'en-CA' locale to get the YYYY-MM-DD format, then replace the comma
+      // This will output "2025-11-13 00:23:22"
+      return dateObj.toLocaleString("en-CA", options).replace(",", "");
     } catch (error) {
       console.warn("Failed to format date string:", utcDateString, error);
       return utcDateString; // Return original string on error
