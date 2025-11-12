@@ -93,6 +93,7 @@ export async function fetchLaundryOrders() {
         special_instructions: acf.Special_Instructions || "—",
         order_status: acf.order_status || "pending",
         order_timestamp: acf.order_timestamp || "—",
+        receipt_number: acf.receipt_number || "—", // +++ ADDED THIS LINE +++
         camp_name: campName, // This should be properly set
         services: fetchedServices,
         pickup_slot: slot,
