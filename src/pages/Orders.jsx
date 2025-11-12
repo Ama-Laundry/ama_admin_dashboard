@@ -79,7 +79,7 @@ const formatUTCToPerth = (utcDateString) => {
   ) {
     try {
       // Create a UTC date object by replacing the space and appending 'Z'
-      // This converts "2025-11-12 16:14:39" -> "2025-11-12T16:14:39Z"
+      // This converts "2025-11-12 16:20:44" -> "2025-11-12T16:20:44Z"
       const isoDateString = utcDateString.replace(" ", "T") + "Z";
       const dateObj = new Date(isoDateString);
 
@@ -96,7 +96,7 @@ const formatUTCToPerth = (utcDateString) => {
       };
 
       // Use 'en-CA' locale to get the YYYY-MM-DD format, then replace the comma
-      // This will output "2025-11-13 00:14:39"
+      // This will output "2025-11-13 00:20:44"
       return dateObj.toLocaleString("en-CA", options).replace(",", "");
     } catch (error) {
       console.warn("Failed to format date string:", utcDateString, error);
