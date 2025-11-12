@@ -48,8 +48,12 @@ export default function ControlPanel() {
   const [error, setError] = useState("");
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadingServiceId, setUploadingServiceId] = useState(null);
-  const [uploadSuccess, setUploadSuccess] = useState(false);
+
+  // --- MODIFIED STATE ---
+  const [showSuccess, setShowSuccess] = useState(false); // Renamed from uploadSuccess
   const [successMessage, setSuccessMessage] = useState("");
+  // --- END MODIFIED STATE ---
+
   const [recentlyUploaded, setRecentlyUploaded] = useState({});
   const [imageVersion, setImageVersion] = useState({});
 
@@ -59,6 +63,15 @@ export default function ControlPanel() {
     target: null,
     initialValue: "",
   });
+
+  // +++ NEW HELPER FUNCTION +++
+  // Helper function to show a success message
+  const showSuccessMessage = (message) => {
+    setSuccessMessage(message);
+    setShowSuccess(true);
+    setError(""); // Clear any previous errors
+  };
+  // +++ END NEW HELPER FUNCTION +++
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -92,16 +105,19 @@ export default function ControlPanel() {
     fetchSettings();
   }, []);
 
+  // --- MODIFIED USEEFFECT ---
   // Clear success message after 3 seconds
   useEffect(() => {
-    if (uploadSuccess) {
+    if (showSuccess) {
+      // <-- CHANGED
       const timer = setTimeout(() => {
-        setUploadSuccess(false);
+        setShowSuccess(false); // <-- CHANGED
         setSuccessMessage("");
       }, 3000);
       return () => clearTimeout(timer);
     }
-  }, [uploadSuccess]);
+  }, [showSuccess]); // <-- CHANGED
+  // --- END MODIFIED USEEFFECT ---
 
   // Clear recently uploaded indicator after 5 seconds
   useEffect(() => {
@@ -129,18 +145,24 @@ export default function ControlPanel() {
   };
 
   // +++ NEW: HANDLER FOR NAME UPDATE API CALL (ON BLUR) +++
+  // --- MODIFIED: Added success message ---
   const handleNameUpdateOnBlur = (id, name) => {
     if (!name.trim()) {
       setError("Service name cannot be empty.");
       // Note: This doesn't revert the state, you might want to reload data
       return;
     }
-    updateServiceName(id, name).catch((err) => {
-      console.error("Failed to update name:", err);
-      setError(
-        "Failed to update service name. Check connection and try again."
-      );
-    });
+    updateServiceName(id, name)
+      .then(() => {
+        // <-- ADDED
+        showSuccessMessage("Service name updated successfully.");
+      })
+      .catch((err) => {
+        console.error("Failed to update name:", err);
+        setError(
+          "Failed to update service name. Check connection and try again."
+        );
+      });
   };
 
   const handlePriceChange = (id, newPrice) => {
@@ -150,13 +172,20 @@ export default function ControlPanel() {
     setPrices(updatedPrices);
   };
 
+  // --- MODIFIED: Added success message ---
   const handlePriceUpdateOnBlur = (id, price) => {
-    updateServicePrice(id, price).catch((err) => {
-      console.error("Failed to update price:", err);
-      setError("Failed to update price. Check connection and try again.");
-    });
+    updateServicePrice(id, price)
+      .then(() => {
+        // <-- ADDED
+        showSuccessMessage("Service price updated successfully.");
+      })
+      .catch((err) => {
+        console.error("Failed to update price:", err);
+        setError("Failed to update price. Check connection and try again.");
+      });
   };
 
+  // --- MODIFIED: Added success message ---
   const handleAddSlot = async () => {
     if (!newSlotStart) {
       setError("Please select a start time.");
@@ -171,28 +200,43 @@ export default function ControlPanel() {
       const newSlotForState = { id: addedSlot.id, time: addedSlot.acf.time };
       setPickupSlots([...pickupSlots, newSlotForState]);
       setNewSlotStart("");
+      showSuccessMessage("Pickup slot added successfully."); // <-- ADDED
     } catch (err) {
       setError(err.message);
     }
   };
 
+  // --- MODIFIED: Added success message ---
   const handleDeleteSlot = async (id) => {
     try {
       await deletePickupSlot(id);
       setPickupSlots(pickupSlots.filter((slot) => slot.id !== id));
+      showSuccessMessage("Pickup slot deleted successfully."); // <-- ADDED
     } catch (err) {
       setError(err.message);
     }
   };
 
+  // --- MODIFIED: Added success/error message ---
   const handleToggleAvailability = () => {
     const newAvailability = !dailyAvailability;
     setDailyAvailability(newAvailability);
     updateSettings({
       daily_availability: newAvailability,
-    });
+    })
+      .then(() => {
+        // <-- ADDED
+        showSuccessMessage("Availability updated successfully.");
+      })
+      .catch((err) => {
+        // <-- ADDED
+        console.error("Failed to update availability:", err);
+        setError("Failed to update availability. Please try again.");
+        setDailyAvailability(!newAvailability); // Revert state on failure
+      });
   };
 
+  // --- MODIFIED: Renamed setUploadSuccess -> setShowSuccess ---
   const handleImageUpload = async (serviceId, event) => {
     const file = event.target.files[0];
     if (!file) return;
@@ -210,7 +254,7 @@ export default function ControlPanel() {
     setUploadingImage(true);
     setUploadingServiceId(serviceId);
     setError("");
-    setUploadSuccess(false);
+    setShowSuccess(false); // <-- CHANGED
     try {
       const formData = new FormData();
       formData.append("file", file);
@@ -233,7 +277,7 @@ export default function ControlPanel() {
 
       setImageVersion((prev) => ({ ...prev, [serviceId]: Date.now() }));
       setRecentlyUploaded((prev) => ({ ...prev, [serviceId]: true }));
-      setUploadSuccess(true);
+      setShowSuccess(true); // <-- CHANGED
       setSuccessMessage("Image uploaded successfully!");
     } catch (err) {
       console.error("Failed to upload image:", err);
@@ -245,6 +289,7 @@ export default function ControlPanel() {
     }
   };
 
+  // --- MODIFIED: Renamed setUploadSuccess -> setShowSuccess ---
   const handleImageDelete = async (serviceId) => {
     if (!window.confirm("Are you sure you want to delete this image?")) return;
 
@@ -256,7 +301,7 @@ export default function ControlPanel() {
         )
       );
       setImageVersion((prev) => ({ ...prev, [serviceId]: Date.now() }));
-      setUploadSuccess(true);
+      setShowSuccess(true); // <-- CHANGED
       setSuccessMessage("Image deleted successfully!");
     } catch (err) {
       console.error("Failed to delete image:", err);
@@ -299,13 +344,15 @@ export default function ControlPanel() {
         </div>
       )}
 
-      {uploadSuccess && (
+      {/* --- MODIFIED: Renamed uploadSuccess -> showSuccess --- */}
+      {showSuccess && ( // <-- CHANGED
         <div className="bg-green-900/50 text-green-300 p-4 rounded-lg text-center">
           <p>
             <strong>Success:</strong> {successMessage}
           </p>
         </div>
       )}
+      {/* --- END MODIFICATION --- */}
 
       <div className="space-y-8">
         <Card title="Daily Availability">
