@@ -162,9 +162,12 @@ export default function App() {
             orderId: data.new_order_id,
           });
 
-          // +++ NEW: Trigger a refresh in the Orders component +++
-          // This updates the prop, causing Orders.jsx's useEffect to re-run.
+          // +++ MODIFICATION: Trigger a refresh in the Orders component +++
           setLastOrderTimestamp(Date.now());
+
+          // +++ THIS IS THE NEW LINE +++
+          // Trigger the highlight effect in Orders.jsx
+          setHighlightOrderId(data.new_order_id);
         });
 
         console.log("Pusher Channels initialized successfully");
