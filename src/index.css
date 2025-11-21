@@ -193,7 +193,7 @@ tr:nth-child(even) {
 
 /* === Form Inputs === */
 .form-input {
-  @apply w-full bg-white/50 text-black border border-white rounded-lg px-4 py-2;
+  @apply w-full bg-blue-600/60 text-black border border-white rounded-lg px-4 py-2;
 }
 
 input[type="text"],
