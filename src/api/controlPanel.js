@@ -12,7 +12,7 @@ export const apiRequest = async (
   isFormData = false
 ) => {
   const headers = {};
-  const nonce = localStorage.getItem("wpNonce"); 
+  const nonce = localStorage.getItem("wpNonce");
   if (nonce) {
     headers["X-WP-Nonce"] = nonce;
   }
@@ -42,7 +42,7 @@ export const apiRequest = async (
         errorMessage = "Authentication failed. Please log in again.";
         localStorage.removeItem("wpNonce");
         localStorage.removeItem("ama_user");
-        window.location.reload(); 
+        window.location.reload();
       }
     } catch (parseError) {
       errorMessage = `HTTP ${response.status}: ${response.statusText}`;
@@ -58,7 +58,11 @@ export const apiRequest = async (
 };
 
 // This helper will also be used by other api files
-export const customApiRequest = async (endpoint, method = "POST", body = null) => {
+export const customApiRequest = async (
+  endpoint,
+  method = "POST",
+  body = null
+) => {
   const headers = {
     "Content-Type": "application/json",
   };
@@ -75,7 +79,7 @@ export const customApiRequest = async (endpoint, method = "POST", body = null) =
   };
 
   if (body && method !== "GET") {
-     options.body = JSON.stringify(body);
+    options.body = JSON.stringify(body);
   }
 
   const response = await fetch(`${CUSTOM_API_BASE}/${endpoint}`, options);
@@ -144,6 +148,14 @@ export const getServices = async () => {
     throw new Error("Failed to load services. Please try again later.");
   }
 };
+
+// +++ NEW FUNCTION TO UPDATE SERVICE NAME (POST TITLE) +++
+export const updateServiceName = (id, name) => {
+  return apiRequest(`service/${id}`, "POST", {
+    title: name,
+  });
+};
+// +++ END OF NEW FUNCTION +++
 
 export const updateServicePrice = (id, price) => {
   return apiRequest(`service/${id}`, "POST", {
