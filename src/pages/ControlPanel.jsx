@@ -407,7 +407,7 @@ export default function ControlPanel() {
                       onBlur={(e) =>
                         handlePriceUpdateOnBlur(item.id, e.target.value)
                       }
-                      className="cp-input add-item-input"
+                      className="cp-input add-item-input !text-black"
                       aria-label={`Price for ${item.name}`}
                     />
                     <span className="text-sm font-medium text-black ml-2">
