@@ -69,7 +69,8 @@ export default function Camps() {
             value={newCampName}
             onChange={(e) => setNewCampName(e.target.value)}
             placeholder="Enter camp name"
-            className="form-input text-black text-center"
+            // +++ MODIFICATION: Added '!' to force text-black override +++
+            className="form-input !text-black text-center"
           />
           <button type="submit" className="btn-add">
             Add Camp
@@ -90,7 +91,8 @@ export default function Camps() {
                   onChange={(e) =>
                     setEditingCamp({ ...editingCamp, name: e.target.value })
                   }
-                  className="form-input text-black"
+                  // +++ MODIFICATION: Added '!' here as well for the edit input +++
+                  className="form-input !text-black"
                 />
               ) : (
                 <div className="camps-list-item-name">

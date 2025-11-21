@@ -58,14 +58,75 @@ const parseOrderDate = (dateString) => {
   }
 };
 
-export default function Orders() {
+//
+// ++++++++++ START OF MODIFICATION ++++++++++
+//
+
+/**
+ * Formats a UTC timestamp string (from WordPress) to Perth (AWST) time.
+ * Assumes the input "YYYY-MM-DD HH:MM:SS" is in UTC.
+ */
+const formatUTCToPerth = (utcDateString) => {
+  if (!utcDateString || utcDateString === "—") return "—";
+
+  // Check if it matches the "YYYY-MM-DD HH:MM:SS" format from WordPress
+  if (
+    utcDateString.length === 19 &&
+    utcDateString[10] === " " &&
+    utcDateString[4] === "-" &&
+    utcDateString[7] === "-"
+  ) {
+    try {
+      // Create a UTC date object by replacing the space and appending 'Z'
+      // This converts "2025-11-12 16:23:22" -> "2025-11-12T16:23:22Z"
+      const isoDateString = utcDateString.replace(" ", "T") + "Z";
+      const dateObj = new Date(isoDateString);
+
+      // Define options for Perth (UTC+8)
+      const options = {
+        timeZone: "Australia/Perth",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false, // Use 24-hour format to match the original
+      };
+
+      // Use 'en-CA' locale to get the YYYY-MM-DD format, then replace the comma
+      // This will output "2025-11-13 00:23:22"
+      return dateObj.toLocaleString("en-CA", options).replace(",", "");
+    } catch (error) {
+      console.warn("Failed to format date string:", utcDateString, error);
+      return utcDateString; // Return original string on error
+    }
+  }
+
+  // For any other format (like "17/09/2025..."),
+  // return it as-is because we can't be sure of its source timezone.
+  return utcDateString;
+};
+
+//
+// ++++++++++  END OF MODIFICATION  ++++++++++
+//
+
+// +++ MODIFICATION: Accept props from App.jsx, including lastOrderTimestamp +++
+export default function Orders({
+  highlightOrderId,
+  setHighlightOrderId,
+  lastOrderTimestamp,
+}) {
   const [orders, setOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useState("today"); // "today", "all", "completed", "pending", "cancelled"
-  const [filters, setFilters] = useState({
+
+  // Define the reset state for filters
+  const initialFilters = {
     customerName: "all",
     campName: "all",
     roomNumber: "all",
@@ -74,7 +135,9 @@ export default function Orders() {
     pickupMethod: "all",
     minPrice: "",
     maxPrice: "",
-  });
+  };
+
+  const [filters, setFilters] = useState(initialFilters);
   const [tempFilters, setTempFilters] = useState({ ...filters });
 
   const uniqueCustomerNames = [
@@ -99,9 +162,54 @@ export default function Orders() {
     ...new Set(orders.map((order) => order.pickup_method).filter(Boolean)),
   ];
 
+  // +++ MODIFICATION: This useEffect now runs on mount AND when lastOrderTimestamp changes +++
   useEffect(() => {
     fetchOrders();
-  }, []);
+  }, [lastOrderTimestamp]); // This prop change will trigger a re-fetch
+
+  // +++ THIS IS THE NEW HIGHLIGHTING LOGIC +++
+  useEffect(() => {
+    if (highlightOrderId) {
+      // Check if the order is already in the currently filtered list
+      const orderInList = filteredOrders.find((o) => o.id === highlightOrderId);
+
+      if (orderInList) {
+        // Order is in the list, try to find it in the DOM
+        const rowToHighlight = document.querySelector(
+          `tr[data-order-id='${highlightOrderId}']`
+        );
+
+        if (rowToHighlight) {
+          // SUCCESS: Found it! Highlight and set cleanup.
+          rowToHighlight.classList.add("highlight-order");
+          rowToHighlight.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+          });
+
+          const timer = setTimeout(() => {
+            rowToHighlight.classList.remove("highlight-order");
+            setHighlightOrderId(null); // Clear the ID *only* after success
+          }, 3000); // Highlight for 3 seconds
+
+          return () => clearTimeout(timer);
+        }
+        // If rowToHighlight is null, the DOM hasn't updated yet.
+        // We do nothing and let the effect re-run when it does.
+      } else {
+        // Order is NOT in the list. Force filters to 'all'.
+        // This will trigger a re-render and re-run this effect.
+        console.log(
+          `Order ${highlightOrderId} not found in view, switching to "All Orders".`
+        );
+        setViewMode("all");
+        setFilters(initialFilters);
+        setTempFilters(initialFilters);
+        setShowFilters(true); // Show user what happened
+      }
+    }
+  }, [highlightOrderId, filteredOrders, setHighlightOrderId, initialFilters]); // Dependencies
+  // +++ END OF NEW HIGHLIGHTING LOGIC +++
 
   const fetchOrders = () => {
     fetchLaundryOrders()
@@ -258,18 +366,8 @@ export default function Orders() {
   };
 
   const resetFilters = () => {
-    const resetValues = {
-      customerName: "all",
-      campName: "all",
-      roomNumber: "all",
-      service: "all",
-      paymentStatus: "all",
-      pickupMethod: "all",
-      minPrice: "",
-      maxPrice: "",
-    };
-    setTempFilters(resetValues);
-    setFilters(resetValues);
+    setTempFilters(initialFilters);
+    setFilters(initialFilters);
     setViewMode("today"); // Default to today's orders
   };
 
@@ -584,6 +682,11 @@ export default function Orders() {
                   </select>
                 </div>
 
+                {/* *
+                 * ++++++++++ START OF MODIFICATION ++++++++++
+                 *
+                 */}
+
                 {/* Min Price */}
                 <div style={{ display: "flex", flexDirection: "column" }}>
                   <label htmlFor="minPrice" style={{ color: "black" }}>
@@ -595,7 +698,7 @@ export default function Orders() {
                     name="minPrice"
                     value={tempFilters.minPrice}
                     onChange={handleFilterChange}
-                    placeholder="Min price"
+                    placeholder="e.g., 10"
                     style={{ color: "black" }}
                   />
                 </div>
@@ -611,10 +714,14 @@ export default function Orders() {
                     name="maxPrice"
                     value={tempFilters.maxPrice}
                     onChange={handleFilterChange}
-                    placeholder="Max price"
+                    placeholder="e.g., 50"
                     style={{ color: "black" }}
                   />
                 </div>
+                {/* *
+                 * ++++++++++  END OF MODIFICATION  ++++++++++
+                 *
+                 */}
               </div>
 
               <div
@@ -667,7 +774,8 @@ export default function Orders() {
                 <thead>
                   <tr>
                     <th>#</th>
-                    <th>Order ID</th>
+                    {/* +++ MODIFIED: Header text changed +++ */}
+                    <th>Receipt #</th>
                     <th>Timestamp</th>
                     <th>Customer Name</th>
                     <th>Camp Name</th>
@@ -682,12 +790,25 @@ export default function Orders() {
                 </thead>
                 <tbody>
                   {filteredOrders.map((order, index) => (
-                    <tr key={order.id}>
+                    // +++ MODIFICATION: Add data-order-id attribute +++
+                    <tr key={order.id} data-order-id={order.id}>
                       <td data-label="#">{index + 1}</td>
-                      <td data-label="Order ID">{order.id}</td>
-                      <td data-label="Timestamp">
-                        {order.order_timestamp || "—"}
+                      {/* +++ MODIFIED: Data label and content changed +++ */}
+                      <td data-label="Receipt #">
+                        {order.receipt_number || order.id}
                       </td>
+
+                      {/*
+                        // ++++++++++ START OF MODIFICATION ++++++++++
+                      */}
+                      <td data-label="Timestamp">
+                        {/* Use the new formatter function here */}
+                        {formatUTCToPerth(order.order_timestamp)}
+                      </td>
+                      {/*
+                        // ++++++++++  END OF MODIFICATION  ++++++++++
+                      */}
+
                       <td data-label="Customer Name">
                         {order.customer_name || "—"}
                       </td>

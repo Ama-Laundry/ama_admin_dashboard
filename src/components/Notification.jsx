@@ -2,7 +2,8 @@
 
 import { useEffect } from "react";
 
-export default function ToastNotification({ message, onClose }) {
+// +++ MODIFICATION: Accept 'onClick' prop +++
+export default function ToastNotification({ message, onClose, onClick }) {
   useEffect(() => {
     // Automatically close the notification after 5 seconds
     const timer = setTimeout(() => {
@@ -14,12 +15,27 @@ export default function ToastNotification({ message, onClose }) {
   }, [onClose]);
 
   return (
-    <div className="notification-toast">
+    // +++ MODIFICATION: Add onClick handler and pointer cursor +++
+    <div
+      className="notification-toast"
+      onClick={onClick}
+      style={{ cursor: "pointer" }}
+    >
       <div className="notification-content">
         <strong>🔔 New Order!</strong>
         <p>{message}</p>
+        {/* +++ NEW: Add a call to action +++ */}
+        <p style={{ fontSize: "0.8rem", opacity: 0.8, marginTop: "4px" }}>
+          Click to view
+        </p>
       </div>
-      <button onClick={onClose} className="notification-close">
+      <button
+        onClick={(e) => {
+          e.stopPropagation(); // Prevent click from triggering navigation
+          onClose();
+        }}
+        className="notification-close"
+      >
         &times;
       </button>
     </div>

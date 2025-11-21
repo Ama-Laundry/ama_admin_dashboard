@@ -193,15 +193,27 @@ tr:nth-child(even) {
 
 /* === Form Inputs === */
 .form-input {
-  @apply w-full bg-blue-600/60 text-black border border-white rounded-lg px-4 py-2;
+  @apply w-full bg-white/50 text-black border border-white rounded-lg px-4 py-2;
 }
 
+/* *
+ * ++++++++++ START OF MODIFICATION ++++++++++
+ *
+ */
+
+/* Added input[type="number"] to this selector */
 input[type="text"],
 input[type="password"],
+input[type="number"],
 select {
-  @apply w-full px-4 py-3 mb-4 rounded-xl border border-white/10 bg-blue-500 text-black text-base;
+  @apply w-full px-4 py-3 mb-4 rounded-xl border border-white/10 bg-white/5 text-white text-base;
   backdrop-filter: blur(6px);
 }
+
+/* *
+ * ++++++++++  END OF MODIFICATION  ++++++++++
+ *
+ */
 
 input::placeholder {
   @apply text-black;
@@ -478,4 +490,24 @@ input::placeholder {
 
 .notification-close:hover {
   @apply text-red-600;
+}
+
+/* === +++ NEW: Order Highlight Styles +++ === */
+@layer utilities {
+  .highlight-order {
+    /* Use a distinct color that works with the theme */
+    background-color: rgba(
+      167,
+      243,
+      208,
+      0.5
+    ) !important; /* Light green, !important to override hover/nth-child */
+    border: 2px solid #10b981 !important; /* Stronger green border */
+    transition: all 0.5s ease-in-out;
+  }
+
+  /* Specificity for responsive (mobile card) view */
+  .orders-table-container tr.highlight-order {
+    box-shadow: 0 0 20px 5px rgba(16, 185, 129, 0.5);
+  }
 }
