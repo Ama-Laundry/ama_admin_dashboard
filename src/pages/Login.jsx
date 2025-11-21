@@ -106,7 +106,7 @@ export default function Login({ onLogin }) {
                 placeholder="Username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="form-input"
+                className="form-input text-black"
                 disabled={loading}
                 required
               />

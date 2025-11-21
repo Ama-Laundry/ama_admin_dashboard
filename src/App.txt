@@ -197,7 +197,7 @@ tr:nth-child(even) {
 
 /* === Form Inputs === */
 .form-input {
-  @apply w-full bg-slate-800 text-white border border-slate-600 rounded-lg px-4 py-2;
+  @apply w-full bg-slate-200 text-black border border-slate-600 rounded-lg px-4 py-2;
 }
 
 input[type="text"],
